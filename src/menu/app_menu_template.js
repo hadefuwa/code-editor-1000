@@ -1,13 +1,22 @@
-import { app } from "electron";
+import { BrowserWindow } from "electron";
+import path from "path";
+import url from "url";
 
 export default {
-  label: "App",
+  label: "Download",
   submenu: [
     {
-      label: "Quit",
-      accelerator: "CmdOrCtrl+Q",
+      label: "Compile To Target",
+      accelerator: "CmdOrCtrl+H",
       click: () => {
-        app.quit();
+        const mainWindow = BrowserWindow.getFocusedWindow(); // Get the current window
+        mainWindow.loadURL(
+          url.format({
+            pathname: path.join(__dirname, "app.html"), // Ensure the correct path to app.html
+            protocol: "file:",
+            slashes: true
+          })
+        );
       }
     }
   ]

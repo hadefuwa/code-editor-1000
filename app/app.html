@@ -1,24 +1,71 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <title>Electron Boilerplate</title>
-  </head>
-  <body>
-    <div id="app" class="container" style="display: none;">
-      <h1 id="greet"></h1>
-      <p>
-        Welcome to
-        <a href="https://www.electronjs.org/" class="electron-website-link">
-          Electron
-        </a>
-        app running on this <strong id="os"></strong> machine.
-      </p>
-      <p>App author: <strong id="author"></strong></p>
-      <p>Environment: <strong id="env"></strong></p>
-      <p>Electron version: <strong id="electron-version"></strong></p>
-    </div>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flowcode Lite</title>
+  <!-- Link to the main.css file -->
+  <link rel="stylesheet" href="../src/stylesheets/main.css">
+  <link rel="icon" href="./resources/flowcode-favicon.ico" type="image/x-icon">
+</head>
+<body>
+  <div id="app">
+    <!-- Flowcode logo image -->
+    <img src="./assets/flowcode-logo.png" alt="Flowcode Logo" id="logo">
+    <h1 id="greet">Welcome to Flowcode Lite!</h1>
+    <p>Running on: <span id="os"></span></p>
+    <p>Environment: <span id="env"></span></p>
+    <p>Electron version: <span id="electron-version"></span></p>
+    <p>Author: <span id="author"></span></p>
+    <a href="https://www.flowcode.co.uk" class="electron-website-link">Flowcode Website</a>
 
-    <script src="app.js"></script>
-  </body>
+    <!-- New section for New Project and Open Project buttons -->
+    <div class="container">
+      <button class="btn" id="newProject">New Project</button>
+      <button class="btn" id="openProject">Open Project</button>
+    </div>
+  </div>
+
+  <!-- Add your script here -->
+  <script>
+    const { ipcRenderer } = require('electron');
+    const jetpack = require('fs-jetpack');
+
+    // Log when we send the IPC message
+    ipcRenderer.send("need-app-path");
+    console.log("Renderer process: Sent need-app-path");
+
+    // Log when we receive the reply
+    ipcRenderer.on("app-path", (event, appDirPath) => {
+      console.log("Renderer process: Received app-path:", appDirPath);
+      
+      const appDir = jetpack.cwd(appDirPath);
+      const manifest = appDir.read("package.json", "json");
+      console.log("Renderer process: Manifest content:", manifest);
+
+      document.querySelector("#author").innerHTML = manifest.author;
+    });
+
+    window.onload = function() {
+      // Test with static data to ensure rendering is working
+      const osMap = {
+        win32: "Windows",
+        darwin: "macOS",
+        linux: "Linux"
+      };
+      document.querySelector("#os").innerHTML = osMap[process.platform];
+      document.querySelector("#env").innerHTML = "development"; // Replace with dynamic environment if needed
+      document.querySelector("#electron-version").innerHTML = process.versions.electron;
+    };
+
+    // Event listeners for New Project and Open Project buttons
+    document.getElementById('newProject').addEventListener('click', () => {
+      ipcRenderer.send('new-project');  // Sends 'new-project' event to the main process
+    });
+
+    document.getElementById('openProject').addEventListener('click', () => {
+      ipcRenderer.send('open-project');  // Sends 'open-project' event to the main process
+    });
+  </script>
+</body>
 </html>

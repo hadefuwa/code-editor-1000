@@ -1,24 +1,38 @@
 {
-  "name": "electron-boilerplate",
-  "productName": "Electron Boilerplate",
-  "description": "Starter for your Electron application",
+  "name": "flowcode-lite",
+  "productName": "Flowcode Lite",
+  "description": "A Lite version of Flowcode",
   "version": "0.0.0",
   "private": true,
-  "author": "Mr. Gumby <mr.gumby@example.com>",
-  "copyright": "© 2017, Gumby inc.",
-  "homepage": "http://example.com",
+  "author": "Hamed Adefuwa <hamed.adefuwa@matrixtsl.com>",
+  "copyright": "© 2024, Matrix TSL",
+  "homepage": "http://flowcode.com",
   "main": "app/main.js",
   "build": {
-    "appId": "com.example.electron-boilerplate",
+    "appId": "com.flowcode.lite",
+    "productName": "Flowcode Lite",
+    "directories": {
+      "output": "dist",
+      "buildResources": "resources"
+    },
     "files": [
       "app/**/*",
+      "src/stylesheets/**/*",  
       "node_modules/**/*",
       "package.json"
     ],
-    "directories": {
-      "buildResources": "resources"
+    "win": {
+      "target": "nsis",
+      "icon": "resources/flowcode-favicon.ico"
     },
-    "publish": null
+    "mac": {
+      "target": "dmg",
+      "icon": "resources/flowcode-favicon.icns"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "resources/flowcode-logo.png"
+    }
   },
   "scripts": {
     "postinstall": "electron-builder install-app-deps",
@@ -28,7 +42,8 @@
     "e2e": "mocha temp/e2e.js --require source-map-support/register",
     "test": "npm run unit && npm run e2e",
     "start": "node build/start.js",
-    "release": "npm test && webpack --config=build/webpack.app.config.js --env=production && electron-builder"
+    "release": "npm test && webpack --config=build/webpack.app.config.js --env=production && electron-builder",
+    "build": "electron-builder"
   },
   "dependencies": {
     "fs-jetpack": "^4.1.0"
@@ -42,6 +57,7 @@
     "electron": "^13.0.1",
     "electron-builder": "^22.5.1",
     "electron-mocha": "^10.0.0",
+    "electron-packager": "^17.1.2",
     "mocha": "^8.3.2",
     "source-map-support": "^0.5.6",
     "spectron": "^15.0.0",

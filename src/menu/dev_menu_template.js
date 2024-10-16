@@ -1,20 +1,24 @@
 import { BrowserWindow } from "electron";
 
 export default {
-  label: "Development",
+  label: "Help",
   submenu: [
     {
-      label: "Reload",
-      accelerator: "CmdOrCtrl+R",
+      label: "Flowcode Wiki",
       click: () => {
-        BrowserWindow.getFocusedWindow().webContents.reloadIgnoringCache();
+        BrowserWindow.getFocusedWindow().loadURL("https://www.flowcode.co.uk/wiki"); // Flowcode Wiki URL
       }
     },
     {
-      label: "Toggle DevTools",
-      accelerator: "Alt+CmdOrCtrl+I",
+      label: "Flowcode Forums",
       click: () => {
-        BrowserWindow.getFocusedWindow().toggleDevTools();
+        BrowserWindow.getFocusedWindow().loadURL("https://www.flowcode.co.uk/forums"); // Flowcode Forums URL
+      }
+    },
+    {
+      label: "Flowcode Licensing",
+      click: () => {
+        BrowserWindow.getFocusedWindow().loadURL("https://www.flowcode.co.uk/buy/?"); // Flowcode Licensing URL
       }
     }
   ]
