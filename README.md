@@ -1,4 +1,4 @@
-# electron-boilerplate
+# Flowcode-Lite
 
 **This repository is no longer in active maintenance.**
 
