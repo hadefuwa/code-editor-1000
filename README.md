@@ -8,8 +8,8 @@ Welcome to Flowcode Lite — a streamlined and easy-to-use version of the powerf
 
 Make sure you have [Node.js](https://nodejs.org) installed, then type...
 ```
-git clone https://github.com/szwacz/electron-boilerplate.git
-cd electron-boilerplate
+git clone https://github.com/hadefuwa/flowcode-lite.git
+cd flowcode-lite
 npm install
 npm start
 ```
