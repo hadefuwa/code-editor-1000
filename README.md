@@ -1,12 +1,8 @@
 # Flowcode-Lite
 
-**This repository is no longer in active maintenance.**
-
 ---
 
-Minimalistic, very easy to understand boilerplate for [Electron runtime](https://www.electronjs.org/). Tested on Windows, macOS and Linux.  
-
-This project contains only bare minimum of tooling and dependencies to provide you with simple to understand and extensible base (but still, this is fully functional Electron environment). The boilerplate doesn't impose on you any frontend technologies, so feel free to pick your favourite.
+Welcome to Flowcode Lite — a streamlined and easy-to-use version of the powerful Flowcode microcontroller programming IDE. Designed to provide a simplified and lightweight experience, Flowcode Lite is perfect for users looking for a no-fuss environment to work with microcontroller programming and embedded systems.
 
 # Quick start
 
