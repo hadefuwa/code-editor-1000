@@ -1,7 +1,7 @@
 import path from "path";
 import url from "url";
-import { app, Menu, ipcMain, shell, Tray, BrowserWindow, dialog } from "electron";  // Added dialog for Open Project
-
+import { app, Menu, ipcMain, shell, Tray, BrowserWindow, dialog } from "electron";  // Make sure to import dialog for file dialogs
+import fs from "fs";  // Required for file system operations
 import appMenuTemplate from "./menu/app_menu_template";
 import editMenuTemplate from "./menu/edit_menu_template";
 import devMenuTemplate from "./menu/dev_menu_template";
@@ -14,6 +14,7 @@ if (env.name !== "production") {
   app.setPath("userData", `${userDataPath} (${env.name})`);
 }
 
+// Set the application menu
 const setApplicationMenu = () => {
   const menus = [appMenuTemplate, editMenuTemplate];
   if (env.name !== "production") {
@@ -22,6 +23,7 @@ const setApplicationMenu = () => {
   Menu.setApplicationMenu(Menu.buildFromTemplate(menus));
 };
 
+// IPC communication handling
 const initIpc = () => {
   ipcMain.on("need-app-path", (event, arg) => {
     event.reply("app-path", app.getAppPath());
@@ -32,22 +34,55 @@ const initIpc = () => {
   });
 
   // Handle New Project request
-  ipcMain.on('new-project', () => {
-    // You can implement the logic for creating a new project here
-    console.log('New Project clicked');
+  ipcMain.on('new-project', (event) => {
+    // Show dialog for creating a new project
+    dialog.showSaveDialog({
+      title: 'Create New Project',
+      defaultPath: path.join(app.getPath('documents'), 'New Project'),
+      buttonLabel: 'Create Project',
+      properties: ['createDirectory', 'promptToCreate']
+    }).then(result => {
+      if (!result.canceled) {
+        const projectPath = result.filePath;
+        console.log('Creating new project at:', projectPath);
+
+        // Create the project folder
+        if (!fs.existsSync(projectPath)) {
+          fs.mkdirSync(projectPath);
+          console.log('Project folder created:', projectPath);
+
+          // Optionally create a README file or initial project files
+          const readmePath = path.join(projectPath, 'README.md');
+          fs.writeFileSync(readmePath, '# New Project\n\nThis is your new project.', 'utf-8');
+          console.log('README file created in the project folder');
+
+          // Send confirmation back to renderer process
+          event.sender.send('project-created', projectPath);
+        } else {
+          console.log('Project folder already exists');
+        }
+      }
+    }).catch(err => {
+      console.error('Error creating new project:', err);
+    });
   });
 
   // Handle Open Project request
   ipcMain.on('open-project', (event) => {
+    // Open dialog to select a folder or file
     dialog.showOpenDialog({
-      properties: ['openFile', 'openDirectory']
+      title: 'Open Project',
+      properties: ['openDirectory', 'openFile']
     }).then(result => {
       if (!result.canceled) {
-        console.log('Selected paths:', result.filePaths);
-        // Here, you can implement logic to open the selected project
+        const selectedPath = result.filePaths[0];
+        console.log('Selected project path:', selectedPath);
+
+        // Send the selected path back to the renderer process
+        event.sender.send('project-opened', selectedPath);
       }
     }).catch(err => {
-      console.log(err);
+      console.error('Error opening project:', err);
     });
   });
 };
@@ -55,6 +90,7 @@ const initIpc = () => {
 // This will hold the reference to the tray icon
 let tray = null;
 
+// Main app setup
 app.on("ready", () => {
   setApplicationMenu();
   initIpc();
@@ -90,6 +126,7 @@ app.on("ready", () => {
   tray.setContextMenu(contextMenu);
 });
 
+// Quit the app when all windows are closed
 app.on("window-all-closed", () => {
   app.quit();
 });

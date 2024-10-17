@@ -66,6 +66,17 @@
     document.getElementById('openProject').addEventListener('click', () => {
       ipcRenderer.send('open-project');  // Sends 'open-project' event to the main process
     });
+
+    // Handle the project creation confirmation from the main process
+    ipcRenderer.on('project-created', (event, projectPath) => {
+      alert('New Project created at: ' + projectPath);
+    });
+
+    // Handle the project opened confirmation from the main process
+    ipcRenderer.on('project-opened', (event, selectedPath) => {
+      alert('Opened Project at: ' + selectedPath);
+      // You can add code here to load the project into the app
+    });
   </script>
 </body>
 </html>
