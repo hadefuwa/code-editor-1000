@@ -8,7 +8,7 @@ describe("application launch", function() {
   it("shows hello world text on screen after launch", function() {
     return this.app.client.$("#greet").then(element => {
       return element.getText().then(text => {
-        expect(text).to.equal("Hello World!");
+        expect(text).to.equal("Welcome to Flowcode Lite!");
       });
     });
   });
