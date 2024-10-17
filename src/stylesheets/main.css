@@ -6,15 +6,14 @@ body {
   padding: 0;
 }
 
-/* Ensure the body takes the full height but centers only the content, not the whole page */
 body {
   display: flex;
   flex-direction: column;
-  justify-content: flex-start; /* Align content to the top */
+  justify-content: flex-start;
   align-items: center;
   font-family: sans-serif;
   color: #525252;
-  background-color: #f5f5f5; /* Optional: Light gray background */
+  background-color: #f5f5f5;
 }
 
 a {
@@ -22,35 +21,44 @@ a {
   color: #cb3837;
 }
 
-.container {
-  text-align: center;
-  margin-top: 20px; /* Add some space under the logo */
-}
-
-#logo {
-  width: 300px; /* Make the logo larger */
-  height: auto;
-  margin-top: 40px; /* Move the logo down a bit from the top */
-  margin-bottom: 20px; /* Add some space below the logo */
-}
-
-/* Center everything inside the container and add padding to the body */
+/* Make the app content more responsive */
 #app {
-  padding: 20px;
+  padding: 5vh 5vw; /* Add scalable padding based on viewport */
   text-align: center;
 }
 
+/* Responsive logo */
+#logo {
+  width: 40vw; /* Double the logo size */
+  height: auto;
+  margin-top: 5vh;
+  margin-bottom: 5vh;
+}
+
+/* Responsive text */
+h1 {
+  font-size: clamp(26px, 5vw, 48px); /* Min font-size: 26px, scaling with 5vw, max font-size: 48px */
+}
+
+
+
+p {
+  font-size: 2.5vw; /* Font size for regular text based on viewport width */
+}
+
+/* Container for buttons */
 .container {
   text-align: center;
-  margin-top: 20px;
+  margin-top: 5vh;
 }
 
+/* Responsive buttons */
 .btn {
   display: inline-block;
-  width: 200px;
-  height: 60px;
-  margin: 10px;
-  font-size: 18px;
+  width: 15vw; /* Make button width responsive */
+  height: 8vh;  /* Make button height responsive */
+  margin: 2vh;
+  font-size: 2.5vh; /* Scale font size based on viewport height */
   color: white;
   background-color: #007bff;
   border: none;
@@ -60,4 +68,33 @@ a {
 
 .btn:hover {
   background-color: #0056b3;
+}
+
+/* Youtube Video Embed */
+.video-container {
+  position: relative;
+  width: 40vw; /* Default width */
+  max-width: 640px; /* Prevent the video from expanding too wide */
+  min-width: 320px; /* Set a minimum width for smaller screens */
+  height: calc(40vw * 9 / 16); /* Maintain the 16:9 aspect ratio */
+  max-height: calc(640px * 9 / 16); /* Ensure height scales with max width */
+  min-height: calc(320px * 9 / 16); /* Ensure height scales with min width */
+  overflow: hidden;
+  margin: 5vh auto; /* Center the video horizontally */
+}
+
+/* Iframe styling to match container */
+.video-container iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Media query to hide the video on very small screens */
+@media (max-width: 500px) {
+  .video-container {
+    display: none; /* Hide the video on very small screens */
+  }
 }

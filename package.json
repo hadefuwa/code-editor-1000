@@ -1,10 +1,10 @@
 {
   "name": "flowcode-lite",
   "productName": "Flowcode Lite",
-  "description": "A Lite version of Flowcode",
-  "version": "0.0.0",
+  "description": "A Lightweight version of Flowcode",
+  "version": "0.0.3",
   "private": true,
-  "author": "Hamed Adefuwa <hamed.adefuwa@matrixtsl.com>",
+  "author": "Matrix TSL <hamed.adefuwa@matrixtsl.com>",
   "copyright": "© 2024, Matrix TSL",
   "homepage": "http://flowcode.com",
   "main": "app/main.js",

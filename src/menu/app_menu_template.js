@@ -8,6 +8,7 @@ export default {
     {
       label: "Compile To Target",
       accelerator: "CmdOrCtrl+H",
+      enabled: false, // This disables the menu item (greyed out)
       click: () => {
         const mainWindow = BrowserWindow.getFocusedWindow(); // Get the current window
         mainWindow.loadURL(

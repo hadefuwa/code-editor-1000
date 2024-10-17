@@ -29,10 +29,41 @@ const initIpc = () => {
     event.reply("app-path", app.getAppPath());
   });
 
+
   ipcMain.on("open-external-link", (event, href) => {
     shell.openExternal(href);
   });
 
+
+  ipcMain.on('new-project', (event) => {
+    // Show dialog for saving a new project with .fcfx extension
+    dialog.showSaveDialog({
+      title: 'Create New Project',
+      defaultPath: path.join(app.getPath('documents'), 'NewProject.fcfx'),  // default to .fcfx extension
+      buttonLabel: 'Save Project',
+      filters: [
+        { name: 'Flowcode Files', extensions: ['fcfx'] }  // Ensure .fcfx is used
+      ]
+    }).then(result => {
+      if (!result.canceled) {
+        const projectFilePath = result.filePath;
+        console.log('Creating new project at:', projectFilePath);
+  
+        // Create the .fcfx project file
+        const projectContent = '<?xml version="1.0"?>\n<FlowcodeProject>\n  <name>New Project</name>\n</FlowcodeProject>';  // Example content for .fcfx file
+        fs.writeFileSync(projectFilePath, projectContent, 'utf-8');
+        console.log('.fcfx file created:', projectFilePath);
+  
+        // Send confirmation back to renderer process
+        event.sender.send('project-created', projectFilePath);
+      }
+    }).catch(err => {
+      console.error('Error creating new project:', err);
+    });
+  });
+  
+
+/*
   // Handle New Project request
   ipcMain.on('new-project', (event) => {
     // Show dialog for creating a new project
@@ -66,6 +97,7 @@ const initIpc = () => {
       console.error('Error creating new project:', err);
     });
   });
+*/
 
   // Handle Open Project request
   ipcMain.on('open-project', (event) => {
