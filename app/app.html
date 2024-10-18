@@ -4,17 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Flowcode Lite</title>
-  <!-- Link to the main.css file -->
   <link rel="stylesheet" href="../src/stylesheets/main.css">
   <link rel="icon" href="./resources/flowcode-favicon.ico" type="image/x-icon">
 </head>
 <body>
   <div id="app">
-    <!-- Flowcode logo image -->
     <img src="./assets/flowcode-logo.png" alt="Flowcode Logo" id="logo">
     <h1 id="greet">Welcome to Flowcode Lite!</h1>
 
-    <!-- Embedded YouTube video -->
+    <div class="container">
+      <button class="btn" id="newProject">New Project</button>
+      <button class="btn" id="openProject">Open Project</button>
+    </div>
+
     <div class="video-container">
       <iframe 
         src="https://www.youtube.com/embed/_9WAcrK9LjE" 
@@ -24,65 +26,81 @@
         allowfullscreen>
       </iframe>
     </div>
-    
-    <!-- New section for New Project and Open Project buttons -->
-    <div class="container">
-      <button class="btn" id="newProject">New Project</button>
-      <button class="btn" id="openProject">Open Project</button>
-    </div>
   </div>
 
-  <!-- Add your script here -->
   <script>
-    const { ipcRenderer } = require('electron');
-    const jetpack = require('fs-jetpack');
+    // Wait for DOM content to load
+    document.addEventListener('DOMContentLoaded', () => {
+      const { ipcRenderer } = require('electron');
+      const jetpack = require('fs-jetpack');
 
-    // Log when we send the IPC message
-    ipcRenderer.send("need-app-path");
-    console.log("Renderer process: Sent need-app-path");
+      // Debug logging
+      console.log('Script loaded');
 
-    // Log when we receive the reply
-    ipcRenderer.on("app-path", (event, appDirPath) => {
-      console.log("Renderer process: Received app-path:", appDirPath);
+      // Get button elements
+      const newProjectBtn = document.getElementById('newProject');
+      const openProjectBtn = document.getElementById('openProject');
+
+      // Add click listeners with debug logging
+      if (newProjectBtn) {
+        newProjectBtn.addEventListener('click', () => {
+          console.log('New Project button clicked');
+          ipcRenderer.send('new-project');
+        });
+      } else {
+        console.error('New Project button not found');
+      }
+
+      if (openProjectBtn) {
+        openProjectBtn.addEventListener('click', () => {
+          console.log('Open Project button clicked');
+          ipcRenderer.send('open-project');
+        });
+      } else {
+        console.error('Open Project button not found');
+      }
+
+      // IPC handlers
+      ipcRenderer.on('project-created', (event, projectPath) => {
+        console.log('Project created:', projectPath);
+        alert('New Project created at: ' + projectPath);
+      });
+
+      ipcRenderer.on('project-opened', (event, selectedPath) => {
+        console.log('Project opened:', selectedPath);
+        alert('Opened Project at: ' + selectedPath);
+      });
+
+      // Other IPC communication
+      ipcRenderer.send("need-app-path");
       
-      const appDir = jetpack.cwd(appDirPath);
-      const manifest = appDir.read("package.json", "json");
-      console.log("Renderer process: Manifest content:", manifest);
-
-      document.querySelector("#author").innerHTML = manifest.author;
+      ipcRenderer.on("app-path", (event, appDirPath) => {
+        console.log("Received app-path:", appDirPath);
+        const appDir = jetpack.cwd(appDirPath);
+        const manifest = appDir.read("package.json", "json");
+        
+        if (document.querySelector("#author")) {
+          document.querySelector("#author").innerHTML = manifest.author;
+        }
+      });
     });
 
+    // OS info (if needed)
     window.onload = function() {
-      // Test with static data to ensure rendering is working
       const osMap = {
         win32: "Windows",
         darwin: "macOS",
         linux: "Linux"
       };
-      document.querySelector("#os").innerHTML = osMap[process.platform];
-      document.querySelector("#env").innerHTML = "development"; // Replace with dynamic environment if needed
-      document.querySelector("#electron-version").innerHTML = process.versions.electron;
+      
+      const osElement = document.querySelector("#os");
+      const envElement = document.querySelector("#env");
+      const versionElement = document.querySelector("#electron-version");
+      
+      if (osElement) osElement.innerHTML = osMap[process.platform];
+      if (envElement) envElement.innerHTML = "development";
+      if (versionElement) versionElement.innerHTML = process.versions.electron;
     };
-
-    // Event listeners for New Project and Open Project buttons
-    document.getElementById('newProject').addEventListener('click', () => {
-      ipcRenderer.send('new-project');  // Sends 'new-project' event to the main process
-    });
-
-    document.getElementById('openProject').addEventListener('click', () => {
-      ipcRenderer.send('open-project');  // Sends 'open-project' event to the main process
-    });
-
-    // Handle the project creation confirmation from the main process
-    ipcRenderer.on('project-created', (event, projectPath) => {
-      alert('New Project created at: ' + projectPath);
-    });
-
-    // Handle the project opened confirmation from the main process
-    ipcRenderer.on('project-opened', (event, selectedPath) => {
-      alert('Opened Project at: ' + selectedPath);
-      // You can add code here to load the project into the app
-    });
   </script>
 </body>
 </html>

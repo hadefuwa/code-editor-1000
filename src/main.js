@@ -1,12 +1,34 @@
 import path from "path";
 import url from "url";
-import { app, Menu, ipcMain, shell, Tray, BrowserWindow, dialog } from "electron";  // Make sure to import dialog for file dialogs
-import fs from "fs";  // Required for file system operations
+import fs from "fs";
+import { app, Menu, ipcMain, shell, Tray, BrowserWindow, dialog } from "electron";
+
 import appMenuTemplate from "./menu/app_menu_template";
 import editMenuTemplate from "./menu/edit_menu_template";
 import devMenuTemplate from "./menu/dev_menu_template";
 import createWindow from "./helpers/window";
 import env from "env";
+
+// Helper function to get the correct asset path
+function getAssetPath(filename) {
+  const isProd = env.name === "production";
+  const possiblePaths = [
+    path.join(__dirname, "resources", filename),
+    path.join(process.resourcesPath, "resources", filename),
+    path.join(__dirname, "..", "resources", filename),
+    path.join(app.getAppPath(), "resources", filename)
+  ];
+
+  for (const possiblePath of possiblePaths) {
+    if (fs.existsSync(possiblePath)) {
+      console.log(`Found asset ${filename} at: ${possiblePath}`);
+      return possiblePath;
+    }
+  }
+  
+  console.error(`Could not find asset: ${filename}`);
+  return null;
+}
 
 // Save userData in separate folders for each environment.
 if (env.name !== "production") {
@@ -14,7 +36,6 @@ if (env.name !== "production") {
   app.setPath("userData", `${userDataPath} (${env.name})`);
 }
 
-// Set the application menu
 const setApplicationMenu = () => {
   const menus = [appMenuTemplate, editMenuTemplate];
   if (env.name !== "production") {
@@ -23,98 +44,50 @@ const setApplicationMenu = () => {
   Menu.setApplicationMenu(Menu.buildFromTemplate(menus));
 };
 
-// IPC communication handling
 const initIpc = () => {
   ipcMain.on("need-app-path", (event, arg) => {
     event.reply("app-path", app.getAppPath());
   });
 
-
   ipcMain.on("open-external-link", (event, href) => {
     shell.openExternal(href);
   });
 
-
+  // Handle New Project request
   ipcMain.on('new-project', (event) => {
-    // Show dialog for saving a new project with .fcfx extension
     dialog.showSaveDialog({
       title: 'Create New Project',
-      defaultPath: path.join(app.getPath('documents'), 'NewProject.fcfx'),  // default to .fcfx extension
-      buttonLabel: 'Save Project',
+      defaultPath: app.getPath('documents'), // Default to Documents folder
+      buttonLabel: 'Create Project',
+      properties: ['createDirectory'],
       filters: [
-        { name: 'Flowcode Files', extensions: ['fcfx'] }  // Ensure .fcfx is used
+        { name: 'Flowcode Project', extensions: ['fcfx'] }
       ]
     }).then(result => {
       if (!result.canceled) {
-        const projectFilePath = result.filePath;
-        console.log('Creating new project at:', projectFilePath);
-  
-        // Create the .fcfx project file
-        const projectContent = '<?xml version="1.0"?>\n<FlowcodeProject>\n  <name>New Project</name>\n</FlowcodeProject>';  // Example content for .fcfx file
-        fs.writeFileSync(projectFilePath, projectContent, 'utf-8');
-        console.log('.fcfx file created:', projectFilePath);
-  
-        // Send confirmation back to renderer process
-        event.sender.send('project-created', projectFilePath);
+        console.log('New project path:', result.filePath);
+        event.reply('project-created', result.filePath);
       }
     }).catch(err => {
-      console.error('Error creating new project:', err);
+      console.error(err);
     });
   });
-  
-
-/*
-  // Handle New Project request
-  ipcMain.on('new-project', (event) => {
-    // Show dialog for creating a new project
-    dialog.showSaveDialog({
-      title: 'Create New Project',
-      defaultPath: path.join(app.getPath('documents'), 'New Project'),
-      buttonLabel: 'Create Project',
-      properties: ['createDirectory', 'promptToCreate']
-    }).then(result => {
-      if (!result.canceled) {
-        const projectPath = result.filePath;
-        console.log('Creating new project at:', projectPath);
-
-        // Create the project folder
-        if (!fs.existsSync(projectPath)) {
-          fs.mkdirSync(projectPath);
-          console.log('Project folder created:', projectPath);
-
-          // Optionally create a README file or initial project files
-          const readmePath = path.join(projectPath, 'README.md');
-          fs.writeFileSync(readmePath, '# New Project\n\nThis is your new project.', 'utf-8');
-          console.log('README file created in the project folder');
-
-          // Send confirmation back to renderer process
-          event.sender.send('project-created', projectPath);
-        } else {
-          console.log('Project folder already exists');
-        }
-      }
-    }).catch(err => {
-      console.error('Error creating new project:', err);
-    });
-  });
-*/
 
   // Handle Open Project request
   ipcMain.on('open-project', (event) => {
-    // Open dialog to select a folder or file
     dialog.showOpenDialog({
+      properties: ['openFile', 'openDirectory'],
       title: 'Open Project',
-      properties: ['openDirectory', 'openFile']
+      filters: [
+        { name: 'Flowcode Project', extensions: ['flowcode'] }
+      ]
     }).then(result => {
       if (!result.canceled) {
-        const selectedPath = result.filePaths[0];
-        console.log('Selected project path:', selectedPath);
-
-        // Send the selected path back to the renderer process
-        event.sender.send('project-opened', selectedPath);
+        console.log('Selected paths:', result.filePaths);
+        event.reply('project-opened', result.filePaths[0]);
       }
     }).catch(err => {
-      console.error('Error opening project:', err);
+      console.log(err);
     });
   });
 };
@@ -122,43 +95,54 @@ const initIpc = () => {
 // This will hold the reference to the tray icon
 let tray = null;
 
-// Main app setup
 app.on("ready", () => {
   setApplicationMenu();
   initIpc();
 
-  // Create the main window
-  const mainWindow = new BrowserWindow({
-    width: 1000,
-    height: 600,
-    icon: path.join(__dirname, "resources", "flowcode-favicon.ico"),  // Set the window icon
-    webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
-      enableRemoteModule: env.name === "test"
+  const iconPath = getAssetPath("flowcode-favicon.ico");
+
+  try {
+    // Create the main window
+    const mainWindow = new BrowserWindow({
+      width: 1000,
+      height: 600,
+      icon: iconPath || undefined,  // Fall back to default if icon not found
+      webPreferences: {
+        nodeIntegration: true,
+        contextIsolation: false,
+        enableRemoteModule: env.name === "test"
+      }
+    });
+
+    // Load the main HTML file
+    mainWindow.loadURL(
+      url.format({
+        pathname: path.join(__dirname, "app.html"),
+        protocol: "file:",
+        slashes: true
+      })
+    );
+
+    // Create the tray icon with error handling
+    if (iconPath) {
+      try {
+        tray = new Tray(iconPath);
+        const contextMenu = Menu.buildFromTemplate([
+          { label: 'Item1', type: 'radio' },
+          { label: 'Item2', type: 'radio' }
+        ]);
+        tray.setToolTip('Flowcode Lite');
+        tray.setContextMenu(contextMenu);
+      } catch (error) {
+        console.error('Error creating tray:', error);
+      }
     }
-  });
 
-  // Load the main HTML file
-  mainWindow.loadURL(
-    url.format({
-      pathname: path.join(__dirname, "app.html"),
-      protocol: "file:",
-      slashes: true
-    })
-  );
-
-  // Create the tray icon
-  tray = new Tray(path.join(__dirname, "resources", "flowcode-favicon.ico"));  // Tray icon
-  const contextMenu = Menu.buildFromTemplate([
-    { label: 'Item1', type: 'radio' },
-    { label: 'Item2', type: 'radio' }
-  ]);
-  tray.setToolTip('Flowcode Lite');
-  tray.setContextMenu(contextMenu);
+  } catch (error) {
+    console.error('Error creating window:', error);
+  }
 });
 
-// Quit the app when all windows are closed
 app.on("window-all-closed", () => {
   app.quit();
 });

@@ -1,10 +1,10 @@
 {
   "name": "flowcode-lite",
   "productName": "Flowcode Lite",
-  "description": "A Lightweight version of Flowcode",
-  "version": "0.0.3",
+  "description": "A Lite version of Flowcode",
+  "version": "0.0.0",
   "private": true,
-  "author": "Matrix TSL <hamed.adefuwa@matrixtsl.com>",
+  "author": "Hamed Adefuwa <hamed.adefuwa@matrixtsl.com>",
   "copyright": "© 2024, Matrix TSL",
   "homepage": "http://flowcode.com",
   "main": "app/main.js",
@@ -32,15 +32,7 @@
     "linux": {
       "target": "AppImage",
       "icon": "resources/flowcode-logo.png"
-    },
-    "publish": [
-      {
-        "provider": "github",
-        "owner": "hadefuwa",
-        "repo": "flowcode-lite",
-        "private": false
-      }
-    ]
+    }
   },
   "scripts": {
     "postinstall": "electron-builder install-app-deps",
@@ -54,24 +46,21 @@
     "build": "electron-builder"
   },
   "dependencies": {
-    "axios": "^1.7.7",
-    "fs-jetpack": "^4.1.0",
-    "tough-cookie": "^5.0.0"
+    "fs-jetpack": "^4.1.0"
   },
   "devDependencies": {
     "@babel/core": "^7.5.5",
     "@babel/preset-env": "^7.5.5",
-    "@electron-forge/publisher-github": "^7.5.0",
     "babel-loader": "^8.2.2",
     "chai": "^4.1.0",
     "css-loader": "^5.2.0",
     "electron": "^33.0.1",
-    "electron-builder": "^25.1.8",
-    "electron-mocha": "^13.0.0",
+    "electron-builder": "^22.5.1",
+    "electron-mocha": "^10.0.0",
     "electron-packager": "^17.1.2",
-    "mocha": "^10.7.3",
+    "mocha": "^8.3.2",
     "source-map-support": "^0.5.6",
-    "spectron": "^10.0.1",
+    "spectron": "^15.0.0",
     "style-loader": "^2.0.0",
     "webpack": "^5.30.0",
     "webpack-cli": "^4.6.0",
