@@ -10,7 +10,6 @@
 <body>
   <div id="app">
     <img src="./assets/flowcode-logo.png" alt="Flowcode Logo" id="logo">
-    <h1 id="greet">Welcome to Flowcode Lite!</h1>
 
     <div class="container">
       <button class="btn" id="newProject">New Project</button>
@@ -29,19 +28,14 @@
   </div>
 
   <script>
-    // Wait for DOM content to load
     document.addEventListener('DOMContentLoaded', () => {
-      const { ipcRenderer } = require('electron');
-      const jetpack = require('fs-jetpack');
-
-      // Debug logging
+      const { ipcRenderer } = window.electron;
+      
       console.log('Script loaded');
-
-      // Get button elements
+  
       const newProjectBtn = document.getElementById('newProject');
       const openProjectBtn = document.getElementById('openProject');
-
-      // Add click listeners with debug logging
+  
       if (newProjectBtn) {
         newProjectBtn.addEventListener('click', () => {
           console.log('New Project button clicked');
@@ -50,7 +44,7 @@
       } else {
         console.error('New Project button not found');
       }
-
+  
       if (openProjectBtn) {
         openProjectBtn.addEventListener('click', () => {
           console.log('Open Project button clicked');
@@ -59,44 +53,58 @@
       } else {
         console.error('Open Project button not found');
       }
-
-      // IPC handlers
+  
       ipcRenderer.on('project-created', (event, projectPath) => {
-        console.log('Project created:', projectPath);
-        alert('New Project created at: ' + projectPath);
+        console.log('Project created at:', projectPath);
+        document.getElementById('greet').innerHTML = `New Project Created at: ${projectPath}`;
       });
-
+  
       ipcRenderer.on('project-opened', (event, selectedPath) => {
         console.log('Project opened:', selectedPath);
         alert('Opened Project at: ' + selectedPath);
       });
-
-      // Other IPC communication
+  
       ipcRenderer.send("need-app-path");
-      
+  
       ipcRenderer.on("app-path", (event, appDirPath) => {
         console.log("Received app-path:", appDirPath);
-        const appDir = jetpack.cwd(appDirPath);
-        const manifest = appDir.read("package.json", "json");
-        
-        if (document.querySelector("#author")) {
-          document.querySelector("#author").innerHTML = manifest.author;
-        }
       });
+  
+      const videoContainer = document.querySelector('.video-container');
+      const greetText = document.querySelector('#greet');
+      const buttonContainer = document.querySelector('.container');
+  
+      function toggleVisibility() {
+        const windowHeight = window.innerHeight;
+  
+        if (windowHeight > 500) {
+          videoContainer.classList.remove('hidden');
+        } else {
+          videoContainer.classList.add('hidden');
+        }
+  
+        if (windowHeight > 400) {
+          buttonContainer.classList.remove('hidden');
+        } else {
+          buttonContainer.classList.add('hidden');
+        }
+      }
+  
+      toggleVisibility();
+      window.addEventListener('resize', toggleVisibility);
     });
-
-    // OS info (if needed)
+  
     window.onload = function() {
       const osMap = {
         win32: "Windows",
         darwin: "macOS",
         linux: "Linux"
       };
-      
+  
       const osElement = document.querySelector("#os");
       const envElement = document.querySelector("#env");
       const versionElement = document.querySelector("#electron-version");
-      
+  
       if (osElement) osElement.innerHTML = osMap[process.platform];
       if (envElement) envElement.innerHTML = "development";
       if (versionElement) versionElement.innerHTML = process.versions.electron;

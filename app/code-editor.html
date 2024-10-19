@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';">
+    <title>Code Editor - Flowcode Lite</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+        #editor-container {
+            height: calc(100% - 50px);
+            width: 100%;
+        }
+        .actions {
+            height: 50px;
+            padding: 10px;
+            background-color: #1e1e1e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        button {
+            margin: 0 5px;
+            padding: 5px 10px;
+            background-color: #333;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        #languageSelect {
+            margin-left: 10px;
+            background-color: #333;
+            color: white;
+            border: none;
+            padding: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="actions">
+        <button id="saveBtn">Save</button>
+        <button id="loadBtn">Load</button>
+        <select id="languageSelect">
+            <option value="flowcode">Flowcode</option>
+            <option value="flowcomponent">Flowcode Component</option>
+            <option value="flowmacro">Flowcode Macro</option>
+            <option value="c">C</option>
+            <option value="cpp">C++</option>
+            <option value="asm">Assembly</option>
+            <option value="verilog">Verilog</option>
+            <option value="vhdl">VHDL</option>
+            <option value="lua">Lua</option>
+            <option value="rust">Rust</option>
+            <option value="matlab">MATLAB</option>
+            <option value="fortran">Fortran</option>
+            <option value="javascript">JavaScript</option>
+            <option value="python">Python</option>
+            <option value="html">HTML</option>
+            <option value="css">CSS</option>
+            <option value="json">JSON</option>
+            
+        </select>
+    </div>
+    <div id="editor-container"></div>
+
+    <script src="../node_modules/monaco-editor/min/vs/loader.js"></script>
+    <script>
+        require.config({ paths: { 'vs': '../node_modules/monaco-editor/min/vs' }});
+        require(['vs/editor/editor.main'], function() {
+            var editor = monaco.editor.create(document.getElementById('editor-container'), {
+                value: '// Start coding here...',
+                language: 'javascript',
+                theme: 'vs-dark',
+                automaticLayout: true
+            });
+
+            window.addEventListener('resize', function() {
+                editor.layout();
+            });
+
+            const languageSelect = document.getElementById('languageSelect');
+            languageSelect.addEventListener('change', function() {
+                monaco.editor.setModelLanguage(editor.getModel(), this.value);
+            });
+
+            document.getElementById('saveBtn').addEventListener('click', function() {
+                var code = editor.getValue();
+                var language = editor.getModel().getLanguageId();
+                window.electron.ipcRenderer.send('save-file', { code, language });
+            });
+
+            document.getElementById('loadBtn').addEventListener('click', function() {
+                window.electron.ipcRenderer.send('load-file');
+            });
+
+            window.electron.ipcRenderer.on('file-loaded', function(content) {
+                editor.setValue(content.code);
+                languageSelect.value = content.language;
+                monaco.editor.setModelLanguage(editor.getModel(), content.language);
+            });
+        });
+    </script>
+</body>
+</html>

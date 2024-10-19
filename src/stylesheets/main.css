@@ -1,3 +1,5 @@
+/* Existing styles */
+
 html,
 body {
   width: 100%;
@@ -39,8 +41,6 @@ a {
 h1 {
   font-size: clamp(26px, 5vw, 48px); /* Min font-size: 26px, scaling with 5vw, max font-size: 48px */
 }
-
-
 
 p {
   font-size: 2.5vw; /* Font size for regular text based on viewport width */
@@ -92,9 +92,19 @@ p {
   height: 100%;
 }
 
+/* Hide the video container if window height is too small */
+.video-container.hidden {
+  display: none !important; /* Ensure the video is hidden */
+}
+
 /* Media query to hide the video on very small screens */
 @media (max-width: 500px) {
   .video-container {
     display: none; /* Hide the video on very small screens */
   }
+}
+
+/* Hide the button container if window height is too small */
+.container.hidden {
+  display: none !important; /* Ensure the button container is hidden */
 }

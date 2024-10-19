@@ -3,8 +3,23 @@ import path from "path";
 import url from "url";
 
 export default {
-  label: "Download",
+  label: "Program",
   submenu: [
+    {
+      label: "Open Code Editor",
+      click: () => {
+        const codeEditorWindow = new BrowserWindow({
+          width: 1200,
+          height: 800,
+          webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false
+          }
+        });
+    
+        codeEditorWindow.loadURL(path.join(__dirname, 'code-editor.html'));
+      }
+    },
     {
       label: "Compile To Target",
       accelerator: "CmdOrCtrl+H",
@@ -19,6 +34,6 @@ export default {
           })
         );
       }
-    }
+    },
   ]
 };

@@ -3,43 +3,35 @@ import path from "path";
 import url from "url";
 
 export default {
-  label: "Help",
+  label: "Developer",
   submenu: [
+    // Home Button
     {
-      label: "About Lite", // About Lite menu item
+      label: "Home", // Home menu item
+      accelerator: "CmdOrCtrl+H", // Optional shortcut to go Home
       click: () => {
-        const aboutWindow = new BrowserWindow({
-          width: 400,
-          height: 300,
-          title: "About Flowcode Lite",
-          webPreferences: {
-            nodeIntegration: true
-          },
-          resizable: false, // Prevent resizing
-          minimizable: false, // Prevent minimizing
-          maximizable: false // Prevent maximizing
-        });
-        
-        aboutWindow.setMenuBarVisibility(false); // Hide the menu bar
-        aboutWindow.loadFile("app/about-lite.html"); // Load the 'About Lite' page
+        const focusedWindow = BrowserWindow.getFocusedWindow();
+        if (focusedWindow) {
+          // Load the home page (assuming it's 'app.html')
+          focusedWindow.loadURL(
+            url.format({
+              pathname: path.join(__dirname, "app.html"), // Update this path to your actual home page
+              protocol: "file:",
+              slashes: true
+            })
+          );
+        }
       }
     },
+    // Toggle Developer Tools
     {
-      label: "Flowcode Wiki",
+      label: "Toggle Developer Tools",
+      accelerator: "CmdOrCtrl+Shift+I", // Shortcut to open DevTools
       click: () => {
-        BrowserWindow.getFocusedWindow().loadURL("https://www.flowcode.co.uk/wiki"); // Flowcode Wiki URL
-      }
-    },
-    {
-      label: "Flowcode Forums",
-      click: () => {
-        BrowserWindow.getFocusedWindow().loadURL("https://www.flowcode.co.uk/forums"); // Flowcode Forums URL
-      }
-    },
-    {
-      label: "Flowcode Licensing",
-      click: () => {
-        BrowserWindow.getFocusedWindow().loadURL("https://www.flowcode.co.uk/buy/?"); // Flowcode Licensing URL
+        const focusedWindow = BrowserWindow.getFocusedWindow();
+        if (focusedWindow) {
+          focusedWindow.webContents.toggleDevTools(); // Open or close DevTools
+        }
       }
     }
   ]
