@@ -24,13 +24,9 @@ import env from "env";
 /******************** Arduino Compiler *************************/
 
 // Update the path to arduino-cli.exe
-const arduinoCliPath = path.join(
-  app.getAppPath(),
-  'resources',
-  'microcontroller_compilers',
-  'Arduino',
-  'arduino-cli.exe'
-);
+const arduinoCliPath = app.isPackaged 
+  ? path.join(process.resourcesPath, 'microcontroller_compilers', 'Arduino', 'arduino-cli.exe')
+  : path.join(app.getAppPath(), 'resources', 'microcontroller_compilers', 'Arduino', 'arduino-cli.exe');
 console.log('Arduino CLI path:', arduinoCliPath);
 
 // Use this function when your app starts
