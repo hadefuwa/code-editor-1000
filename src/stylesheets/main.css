@@ -108,3 +108,54 @@ p {
 .container.hidden {
   display: none !important; /* Ensure the button container is hidden */
 }
+
+/* Code Editor Styles */
+#editor-container {
+  height: calc(100% - 50px);
+  width: 100%;
+}
+
+.actions {
+  height: 50px;
+  padding: 10px;
+  background-color: #1e1e1e;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.actions button,
+.actions select {
+  margin: 0 5px;
+  padding: 5px 10px;
+  background-color: #333;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.actions select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg fill='white' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
+  background-repeat: no-repeat;
+  background-position-x: 100%;
+  background-position-y: 50%;
+  padding-right: 25px;
+}
+
+.actions select::-ms-expand {
+  display: none;
+}
+
+.actions button:hover,
+.actions select:hover {
+  background-color: #444;
+}
+
+.actions button:active,
+.actions select:active {
+  background-color: #555;
+}

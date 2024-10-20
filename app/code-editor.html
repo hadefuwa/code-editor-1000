@@ -22,22 +22,27 @@
             background-color: #1e1e1e;
             display: flex;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
         }
-        button {
+        .actions button,
+        .actions select {
             margin: 0 5px;
             padding: 5px 10px;
             background-color: #333;
             color: white;
             border: none;
             cursor: pointer;
+            font-size: 14px;
         }
-        #languageSelect {
-            margin-left: 10px;
-            background-color: #333;
-            color: white;
-            border: none;
-            padding: 5px;
+        .actions select {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml;utf8,<svg fill='white' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
+            background-repeat: no-repeat;
+            background-position-x: 100%;
+            background-position-y: 50%;
+            padding-right: 25px;
         }
     </style>
 </head>
@@ -63,20 +68,40 @@
             <option value="html">HTML</option>
             <option value="css">CSS</option>
             <option value="json">JSON</option>
-            
         </select>
+        <select id="boardSelect">
+            <option value="matrix:eblocks:BL0058">EBlocks BL0058</option>
+            <option value="atmega328p">ATmega328P</option>
+            <option value="arduino:avr:uno">Arduino Uno</option>
+        </select>
+        <select id="comPortSelect">
+            <option value="">Select COM Port</option>
+        </select>
+        <button id="uploadBtn">Download to Microcontroller</button>
     </div>
     <div id="editor-container"></div>
 
     <script src="../node_modules/monaco-editor/min/vs/loader.js"></script>
     <script>
+        let editor; 
         require.config({ paths: { 'vs': '../node_modules/monaco-editor/min/vs' }});
         require(['vs/editor/editor.main'], function() {
-            var editor = monaco.editor.create(document.getElementById('editor-container'), {
+            editor = monaco.editor.create(document.getElementById('editor-container'), {
                 value: '// Start coding here...',
                 language: 'javascript',
                 theme: 'vs-dark',
                 automaticLayout: true
+            });
+
+            // Populate COM port list
+            window.electron.ipcRenderer.invoke('get-com-ports').then((ports) => {
+                const comPortSelect = document.getElementById('comPortSelect');
+                ports.forEach(port => {
+                    const option = document.createElement('option');
+                    option.value = port.path;
+                    option.textContent = port.friendlyName;
+                    comPortSelect.appendChild(option);
+                });
             });
 
             window.addEventListener('resize', function() {
@@ -98,10 +123,32 @@
                 window.electron.ipcRenderer.send('load-file');
             });
 
+            document.getElementById('uploadBtn').addEventListener('click', function() {
+                const code = editor.getValue();
+                const language = editor.getModel().getLanguageId();
+                const boardType = document.getElementById('boardSelect').value;
+                const comPort = document.getElementById('comPortSelect').value;
+                
+                if (!boardType || !comPort) {
+                    alert('Please select both a board and a COM port before uploading.');
+                    return;
+                }
+                
+                window.electron.ipcRenderer.send('compile-and-upload', { code, language, boardType, comPort });
+            });
+
             window.electron.ipcRenderer.on('file-loaded', function(content) {
                 editor.setValue(content.code);
                 languageSelect.value = content.language;
                 monaco.editor.setModelLanguage(editor.getModel(), content.language);
+            });
+
+            window.electron.ipcRenderer.on('compile-upload-result', function(result) {
+                if (result.success) {
+                    alert(result.message);
+                } else {
+                    alert('Error: ' + result.error);
+                }
             });
         });
     </script>

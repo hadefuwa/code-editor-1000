@@ -1,7 +1,15 @@
 import path from "path";
 import url from "url";
 import fs from "fs";
-import { app, Menu, ipcMain, shell, Tray, BrowserWindow, dialog } from "electron";
+import {
+  app,
+  Menu,
+  ipcMain,
+  shell,
+  Tray,
+  BrowserWindow,
+  dialog,
+} from "electron";
 
 import mainMenu from "./menu/main_menu_template";
 import editMenu from "./menu/edit_menu_template";
@@ -9,11 +17,13 @@ import appMenu from "./menu/app_menu_template";
 import helpMenu from "./menu/help_menu_template";
 import devMenu from "./menu/dev_menu_template";
 import createWindow from "./helpers/window";
+import { exec } from "child_process";
+import { SerialPort } from "serialport";
 import env from "env";
 
 // Global variables
-let mainWindow = null;  // Main window
-let tray = null;  // Tray icon
+let mainWindow = null; // Main window
+let tray = null; // Tray icon
 
 /**
  * Helper function to get the correct asset path
@@ -26,7 +36,7 @@ function getAssetPath(filename) {
     path.join(__dirname, "resources", filename),
     path.join(process.resourcesPath, "resources", filename),
     path.join(__dirname, "..", "resources", filename),
-    path.join(app.getAppPath(), "resources", filename)
+    path.join(app.getAppPath(), "resources", filename),
   ];
 
   for (const possiblePath of possiblePaths) {
@@ -35,7 +45,7 @@ function getAssetPath(filename) {
       return possiblePath;
     }
   }
-  
+
   console.error(`Could not find asset: ${filename}`);
   return null;
 }
@@ -66,27 +76,27 @@ const setApplicationMenu = () => {
  */
 const getFileExtension = (language) => {
   const extensions = {
-    javascript: 'js',
-    python: 'py',
-    html: 'html',
-    css: 'css',
-    json: 'json',
-    c: 'c',
-    cpp: 'cpp',
-    'c++': 'cpp',
-    asm: 'asm',
-    assembly: 'asm',
-    verilog: 'v',
-    vhdl: 'vhd',
-    lua: 'lua',
-    rust: 'rs',
-    matlab: 'm',
-    fortran: 'f90',
-    flowcode: 'fcfx',
-    flowcomponent: 'cmp',
-    flowmacro: 'fmcr'
+    javascript: "js",
+    python: "py",
+    html: "html",
+    css: "css",
+    json: "json",
+    c: "c",
+    cpp: "cpp",
+    "c++": "cpp",
+    asm: "asm",
+    assembly: "asm",
+    verilog: "v",
+    vhdl: "vhd",
+    lua: "lua",
+    rust: "rs",
+    matlab: "m",
+    fortran: "f90",
+    flowcode: "fcfx",
+    flowcomponent: "cmp",
+    flowmacro: "fmcr",
   };
-  return extensions[language.toLowerCase()] || 'txt';
+  return extensions[language.toLowerCase()] || "txt";
 };
 
 /**
@@ -96,25 +106,25 @@ const getFileExtension = (language) => {
  */
 const getLanguageFromExtension = (extension) => {
   const languages = {
-    js: 'javascript',
-    py: 'python',
-    html: 'html',
-    css: 'css',
-    json: 'json',
-    c: 'c',
-    cpp: 'c++',
-    asm: 'assembly',
-    v: 'verilog',
-    vhd: 'vhdl',
-    lua: 'lua',
-    rs: 'rust',
-    m: 'matlab',
-    f90: 'fortran',
-    fcfx: 'flowcode',
-    cmp: 'flowcomponent',
-    fmcr: 'flowmacro'
+    js: "javascript",
+    py: "python",
+    html: "html",
+    css: "css",
+    json: "json",
+    c: "c",
+    cpp: "c++",
+    asm: "assembly",
+    v: "verilog",
+    vhd: "vhdl",
+    lua: "lua",
+    rs: "rust",
+    m: "matlab",
+    f90: "fortran",
+    fcfx: "flowcode",
+    cmp: "flowcomponent",
+    fmcr: "flowmacro",
   };
-  return languages[extension.toLowerCase()] || 'plaintext';
+  return languages[extension.toLowerCase()] || "plaintext";
 };
 
 /**
@@ -132,122 +142,221 @@ const initIpc = () => {
   });
 
   // Handler for new project
-  ipcMain.on('new-project', () => {
+  ipcMain.on("new-project", () => {
     const focusedWindow = BrowserWindow.getFocusedWindow();
     if (focusedWindow) {
       focusedWindow.loadURL(
         url.format({
           pathname: path.join(__dirname, "code-editor.html"),
           protocol: "file:",
-          slashes: true
+          slashes: true,
         })
       );
     }
   });
 
   // Handler for opening project
-  ipcMain.on('open-project', (event) => {
+  ipcMain.on("open-project", (event) => {
     const mainWindow = BrowserWindow.getFocusedWindow();
-    dialog.showOpenDialog(mainWindow, {
-      properties: ['openFile'],
-      filters: [
-        { name: 'Flowcode Project', extensions: ['fcfx'] }
-      ]
-    }).then(result => {
-      if (!result.canceled) {
-        const selectedFile = result.filePaths[0];
-        console.log("Opening project: ", selectedFile);
-        event.reply('project-opened', selectedFile);
-        // TODO: Add logic to open and read the project file
-        // const projectData = fs.readFileSync(selectedFile);
-        // You might want to send this data to the renderer process
-      }
-    }).catch(err => {
-      console.log("Error opening project: ", err);
-    });
+    dialog
+      .showOpenDialog(mainWindow, {
+        properties: ["openFile"],
+        filters: [{ name: "Flowcode Project", extensions: ["fcfx"] }],
+      })
+      .then((result) => {
+        if (!result.canceled) {
+          const selectedFile = result.filePaths[0];
+          console.log("Opening project: ", selectedFile);
+          event.reply("project-opened", selectedFile);
+          // TODO: Add logic to open and read the project file
+          // const projectData = fs.readFileSync(selectedFile);
+          // You might want to send this data to the renderer process
+        }
+      })
+      .catch((err) => {
+        console.log("Error opening project: ", err);
+      });
   });
 
   // Handler for saving file
-  ipcMain.on('save-file', (event, { code, language }) => {
+  ipcMain.on("save-file", (event, { code, language }) => {
     const extension = getFileExtension(language);
-    dialog.showSaveDialog({
-      title: 'Save File',
-      defaultPath: path.join(app.getPath('documents'), `untitled.${extension}`),
-      buttonLabel: 'Save',
-      filters: [
-        { name: 'All Files', extensions: ['*'] },
-        { name: 'Flowcode Project', extensions: ['fcfx'] },
-        { name: 'Flowcode Component', extensions: ['cmp'] },
-        { name: 'Flowcode Macro', extensions: ['fmcr'] },
-        { name: 'C', extensions: ['c'] },
-        { name: 'C++', extensions: ['cpp', 'cxx', 'cc'] },
-        { name: 'Assembly', extensions: ['asm', 's'] },
-        { name: 'Verilog', extensions: ['v'] },
-        { name: 'VHDL', extensions: ['vhd', 'vhdl'] },
-        { name: 'Lua', extensions: ['lua'] },
-        { name: 'Rust', extensions: ['rs'] },
-        { name: 'MATLAB', extensions: ['m'] },
-        { name: 'Fortran', extensions: ['f90', 'f95', 'f03'] },
-        { name: 'JavaScript', extensions: ['js'] },
-        { name: 'Python', extensions: ['py'] },
-        { name: 'HTML', extensions: ['html', 'htm'] },
-        { name: 'CSS', extensions: ['css'] },
-        { name: 'JSON', extensions: ['json'] }
-      ]
-    }).then(result => {
-      if (!result.canceled && result.filePath) {
-        fs.writeFileSync(result.filePath, code);
-        event.reply('file-saved', result.filePath);
-        console.log(`File saved at ${result.filePath}`);
-      }
-    }).catch(err => {
-      console.error('Error saving file:', err);
-      event.reply('file-save-error', err.message);
-    });
+    dialog
+      .showSaveDialog({
+        title: "Save File",
+        defaultPath: path.join(
+          app.getPath("documents"),
+          `untitled.${extension}`
+        ),
+        buttonLabel: "Save",
+        filters: [
+          { name: "All Files", extensions: ["*"] },
+          { name: "Flowcode Project", extensions: ["fcfx"] },
+          { name: "Flowcode Component", extensions: ["cmp"] },
+          { name: "Flowcode Macro", extensions: ["fmcr"] },
+          { name: "C", extensions: ["c"] },
+          { name: "C++", extensions: ["cpp", "cxx", "cc"] },
+          { name: "Assembly", extensions: ["asm", "s"] },
+          { name: "Verilog", extensions: ["v"] },
+          { name: "VHDL", extensions: ["vhd", "vhdl"] },
+          { name: "Lua", extensions: ["lua"] },
+          { name: "Rust", extensions: ["rs"] },
+          { name: "MATLAB", extensions: ["m"] },
+          { name: "Fortran", extensions: ["f90", "f95", "f03"] },
+          { name: "JavaScript", extensions: ["js"] },
+          { name: "Python", extensions: ["py"] },
+          { name: "HTML", extensions: ["html", "htm"] },
+          { name: "CSS", extensions: ["css"] },
+          { name: "JSON", extensions: ["json"] },
+        ],
+      })
+      .then((result) => {
+        if (!result.canceled && result.filePath) {
+          fs.writeFileSync(result.filePath, code);
+          event.reply("file-saved", result.filePath);
+          console.log(`File saved at ${result.filePath}`);
+        }
+      })
+      .catch((err) => {
+        console.error("Error saving file:", err);
+        event.reply("file-save-error", err.message);
+      });
   });
 
   // Handler for loading file
-  ipcMain.on('load-file', (event) => {
-    dialog.showOpenDialog({
-      title: 'Open File',
-      defaultPath: app.getPath('documents'),
-      buttonLabel: 'Load',
-      filters: [
-        { name: 'All Files', extensions: ['*'] },
-        { name: 'Flowcode Project', extensions: ['fcfx'] },
-        { name: 'Flowcode Component', extensions: ['cmp'] },
-        { name: 'Flowcode Macro', extensions: ['fmcr'] },
-        { name: 'C', extensions: ['c'] },
-        { name: 'C++', extensions: ['cpp', 'cxx', 'cc'] },
-        { name: 'Assembly', extensions: ['asm', 's'] },
-        { name: 'Verilog', extensions: ['v'] },
-        { name: 'VHDL', extensions: ['vhd', 'vhdl'] },
-        { name: 'Lua', extensions: ['lua'] },
-        { name: 'Rust', extensions: ['rs'] },
-        { name: 'MATLAB', extensions: ['m'] },
-        { name: 'Fortran', extensions: ['f90', 'f95', 'f03'] },
-        { name: 'JavaScript', extensions: ['js'] },
-        { name: 'Python', extensions: ['py'] },
-        { name: 'HTML', extensions: ['html', 'htm'] },
-        { name: 'CSS', extensions: ['css'] },
-        { name: 'JSON', extensions: ['json'] }
-      ],
-      properties: ['openFile']
-    }).then(result => {
-      if (!result.canceled && result.filePaths.length > 0) {
-        const filePath = result.filePaths[0];
-        const content = fs.readFileSync(filePath, 'utf-8');
-        const extension = path.extname(filePath).slice(1);
-        const language = getLanguageFromExtension(extension);
-        event.reply('file-loaded', { code: content, language });
-        console.log(`File loaded from ${filePath}`);
+  ipcMain.on("load-file", (event) => {
+    dialog
+      .showOpenDialog({
+        title: "Open File",
+        defaultPath: app.getPath("documents"),
+        buttonLabel: "Load",
+        filters: [
+          { name: "All Files", extensions: ["*"] },
+          { name: "Flowcode Project", extensions: ["fcfx"] },
+          { name: "Flowcode Component", extensions: ["cmp"] },
+          { name: "Flowcode Macro", extensions: ["fmcr"] },
+          { name: "C", extensions: ["c"] },
+          { name: "C++", extensions: ["cpp", "cxx", "cc"] },
+          { name: "Assembly", extensions: ["asm", "s"] },
+          { name: "Verilog", extensions: ["v"] },
+          { name: "VHDL", extensions: ["vhd", "vhdl"] },
+          { name: "Lua", extensions: ["lua"] },
+          { name: "Rust", extensions: ["rs"] },
+          { name: "MATLAB", extensions: ["m"] },
+          { name: "Fortran", extensions: ["f90", "f95", "f03"] },
+          { name: "JavaScript", extensions: ["js"] },
+          { name: "Python", extensions: ["py"] },
+          { name: "HTML", extensions: ["html", "htm"] },
+          { name: "CSS", extensions: ["css"] },
+          { name: "JSON", extensions: ["json"] },
+        ],
+        properties: ["openFile"],
+      })
+      .then((result) => {
+        if (!result.canceled && result.filePaths.length > 0) {
+          const filePath = result.filePaths[0];
+          const content = fs.readFileSync(filePath, "utf-8");
+          const extension = path.extname(filePath).slice(1);
+          const language = getLanguageFromExtension(extension);
+          event.reply("file-loaded", { code: content, language });
+          console.log(`File loaded from ${filePath}`);
+        }
+      })
+      .catch((err) => {
+        console.error("Error loading file:", err);
+        event.reply("file-load-error", err.message);
+      });
+  });
+
+  // New IPC handler for compiling and uploading to microcontroller
+  ipcMain.on("compile-and-upload", (event, { code, language, boardType }) => {
+    console.log(`Compiling and uploading ${language} code to ${boardType}`);
+
+    // Update the upload command to use the selected COM port
+    const uploadCommand = getUploadCommand(boardType, tempFile, comPort);
+
+    // Step 1: Save the code to a temporary file
+    const tempDir = app.getPath("temp");
+    const tempFile = path.join(
+      tempDir,
+      `temp_code.${getFileExtension(language)}`
+    );
+    fs.writeFileSync(tempFile, code);
+
+    // Step 2: Compile the code
+    const compileCommand = getCompileCommand(language, tempFile, boardType);
+
+    exec(compileCommand, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`Compilation error: ${error}`);
+        event.reply("compile-upload-result", { success: false, error: stderr });
+        return;
       }
-    }).catch(err => {
-      console.error('Error loading file:', err);
-      event.reply('file-load-error', err.message);
+
+      console.log(`Compilation stdout: ${stdout}`);
+
+      // Step 3: Upload to microcontroller
+      const uploadCommand = getUploadCommand(boardType, tempFile);
+
+      exec(uploadCommand, (uploadError, uploadStdout, uploadStderr) => {
+        if (uploadError) {
+          console.error(`Upload error: ${uploadError}`);
+          event.reply("compile-upload-result", {
+            success: false,
+            error: uploadStderr,
+          });
+          return;
+        }
+
+        console.log(`Upload stdout: ${uploadStdout}`);
+        event.reply("compile-upload-result", {
+          success: true,
+          message: "Code successfully uploaded to the microcontroller.",
+        });
+      });
     });
   });
+
+  // Add this to your initIpc function
+  ipcMain.handle("get-com-ports", async () => {
+    try {
+      const ports = await SerialPort.list();
+      return ports.map((port) => ({
+        path: port.path,
+        friendlyName: port.friendlyName || port.path,
+      }));
+    } catch (error) {
+      console.error("Error getting COM ports:", error);
+      return [];
+    }
+  });
 };
+
+// Helper function to get the compile command based on language and board type
+function getCompileCommand(language, filePath, boardType) {
+  switch (language) {
+    case "c":
+    case "cpp":
+      return `avr-gcc -mmcu=${boardType} -o ${filePath}.hex ${filePath}`;
+    case "arduino":
+      return `arduino-cli compile --fqbn ${boardType} ${filePath}`;
+    // Add more cases for other languages/boards as needed
+    default:
+      throw new Error(`Unsupported language: ${language}`);
+  }
+}
+
+function getUploadCommand(boardType, filePath, comPort) {
+  switch(boardType) {
+    case 'atmega328p':
+      return `avrdude -p ${boardType} -c arduino -P ${comPort} -U flash:w:${filePath}.hex`;
+    case 'arduino:avr:uno':
+      return `arduino-cli upload -p ${comPort} --fqbn ${boardType} ${filePath}`;
+    // Add more cases for other boards as needed
+    default:
+      throw new Error(`Unsupported board type: ${boardType}`);
+  }
+}
 
 // App ready event
 app.on("ready", () => {
@@ -266,27 +375,27 @@ app.on("ready", () => {
         contextIsolation: true,
         preload: path.join(__dirname, "preload.js"),
         enableRemoteModule: env.name === "test",
-        webSecurity: true
-      }
+        webSecurity: true,
+      },
     });
 
     mainWindow.loadURL(
       url.format({
         pathname: path.join(__dirname, "app.html"),
         protocol: "file:",
-        slashes: true
+        slashes: true,
       })
     );
 
     // When the main window is closed, close all other windows
     mainWindow.on("closed", () => {
       const allWindows = BrowserWindow.getAllWindows();
-      allWindows.forEach(win => {
+      allWindows.forEach((win) => {
         if (win !== mainWindow) {
           win.close();
         }
       });
-      
+
       mainWindow = null;
       app.quit();
     });
@@ -296,18 +405,17 @@ app.on("ready", () => {
       try {
         tray = new Tray(iconPath);
         const contextMenu = Menu.buildFromTemplate([
-          { label: 'Item1', type: 'radio' },
-          { label: 'Item2', type: 'radio' }
+          { label: "Item1", type: "radio" },
+          { label: "Item2", type: "radio" },
         ]);
-        tray.setToolTip('Flowcode Lite');
+        tray.setToolTip("Flowcode Lite");
         tray.setContextMenu(contextMenu);
       } catch (error) {
-        console.error('Error creating tray:', error);
+        console.error("Error creating tray:", error);
       }
     }
-
   } catch (error) {
-    console.error('Error creating window:', error);
+    console.error("Error creating window:", error);
   }
 });
 
@@ -319,7 +427,7 @@ app.on("window-all-closed", () => {
 });
 
 // On macOS, re-create a window when dock icon is clicked and no other windows are open
-app.on('activate', () => {
+app.on("activate", () => {
   if (mainWindow === null) {
     const iconPath = getAssetPath("flowcode-favicon.ico");
     mainWindow = new BrowserWindow({
@@ -331,15 +439,15 @@ app.on('activate', () => {
         contextIsolation: true,
         preload: path.join(__dirname, "preload.js"),
         enableRemoteModule: env.name === "test",
-        webSecurity: true
-      }
+        webSecurity: true,
+      },
     });
 
     mainWindow.loadURL(
       url.format({
         pathname: path.join(__dirname, "app.html"),
         protocol: "file:",
-        slashes: true
+        slashes: true,
       })
     );
   }

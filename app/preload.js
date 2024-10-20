@@ -9,7 +9,10 @@ contextBridge.exposeInMainWorld('electron', {
         "new-project",
         "open-project",
         "save-file",
-        "load-file"
+        "load-file",
+        "compile-and-upload",
+        "get-board-list",
+        "select-port"
       ];
       if (validChannels.includes(channel)) {
         ipcRenderer.send(channel, data);
@@ -23,7 +26,10 @@ contextBridge.exposeInMainWorld('electron', {
         "file-save-error",
         "file-loaded",
         "file-load-error",
-        "project-created"
+        "project-created",
+        "compile-upload-result",
+        "board-list-result",
+        "port-selected"
       ];
       if (validChannels.includes(channel)) {
         ipcRenderer.on(channel, (event, ...args) => func(...args));
@@ -37,10 +43,23 @@ contextBridge.exposeInMainWorld('electron', {
         "file-save-error",
         "file-loaded",
         "file-load-error",
-        "project-created"
+        "project-created",
+        "compile-upload-result",
+        "board-list-result",
+        "port-selected"
       ];
       if (validChannels.includes(channel)) {
         ipcRenderer.removeListener(channel, func);
+      }
+    },
+    invoke: (channel, ...args) => {
+      const validChannels = [
+        "get-board-list",
+        "get-port-list",
+        "get-com-ports"  // Add this new channel
+      ];
+      if (validChannels.includes(channel)) {
+        return ipcRenderer.invoke(channel, ...args);
       }
     }
   }
