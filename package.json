@@ -2,7 +2,7 @@
   "name": "flowcode-lite",
   "productName": "Flowcode Lite",
   "description": "A Lite version of Flowcode",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "private": true,
   "author": "Hamed Adefuwa <hamed.adefuwa@matrixtsl.com>",
   "copyright": "© 2024, Matrix TSL",

@@ -278,21 +278,43 @@ const initIpc = () => {
   });
 
   // New IPC handler for compiling and uploading to microcontroller
-  const tempDir = path.join(__dirname, 'microcontroller_compilers', 'Arduino');
-  const tempSketchPath = path.join(tempDir, 'temp_sketch.ino');
-  console.log('Temp sketch path:', tempSketchPath);
-
   ipcMain.on('compile-and-upload', async (event, { code, boardType, comPort }) => {
     try {
+      const tempDir = path.join(app.getPath('temp'), 'flowcode-lite');
+      const sketchName = 'flowcode-lite';
+      const tempSketchPath = path.join(tempDir, `${sketchName}.ino`);
+      
+      console.log('Temp directory:', tempDir);
+      console.log('Temp sketch path:', tempSketchPath);
+
+      // Ensure the temp directory exists
       if (!fs.existsSync(tempDir)) {
         fs.mkdirSync(tempDir, { recursive: true });
       }
-      
-      fs.writeFileSync(tempSketchPath, code);
+
+      // Write the sketch file
+      fs.writeFileSync(tempSketchPath, code, 'utf8');
       console.log(`Temporary sketch saved at: ${tempSketchPath}`);
-  
-      const result = await compileAndUpload(tempSketchPath, boardType, comPort);
-      event.reply('compile-upload-result', { success: true, message: result });
+
+      // Construct the command
+      const compileCommand = `"${arduinoCliPath}" compile --fqbn ${boardType} "${tempDir}"`;
+      const uploadCommand = `"${arduinoCliPath}" upload -p ${comPort} --fqbn ${boardType} "${tempDir}"`;
+      const fullCommand = `${compileCommand} && ${uploadCommand}`;
+
+      console.log('Executing command:', fullCommand);
+
+      // Execute the command
+      exec(fullCommand, (error, stdout, stderr) => {
+        if (error) {
+          console.error(`exec error: ${error}`);
+          console.error(`stderr: ${stderr}`);
+          event.reply('compile-upload-result', { success: false, error: error.toString() + '\n' + stderr });
+          return;
+        }
+        console.log(`stdout: ${stdout}`);
+        console.error(`stderr: ${stderr}`);
+        event.reply('compile-upload-result', { success: true, message: 'Code compiled and uploaded successfully' });
+      });
     } catch (error) {
       console.error('Compile and upload error:', error);
       event.reply('compile-upload-result', { success: false, error: error.toString() });
@@ -466,3 +488,8 @@ app.on("activate", () => {
     );
   }
 });
+
+console.log('Current working directory:', process.cwd());
+console.log('App path:', app.getAppPath());
+console.log('User data path:', app.getPath('userData'));
+
