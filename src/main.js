@@ -10,6 +10,8 @@ import {
   BrowserWindow,
   dialog,
 } from "electron";
+import { exec } from "child_process";
+import { SerialPort } from "serialport";
 
 import mainMenu from "./menu/main_menu_template";
 import editMenu from "./menu/edit_menu_template";
@@ -17,9 +19,24 @@ import appMenu from "./menu/app_menu_template";
 import helpMenu from "./menu/help_menu_template";
 import devMenu from "./menu/dev_menu_template";
 import createWindow from "./helpers/window";
-import { exec } from "child_process";
-import { SerialPort } from "serialport";
 import env from "env";
+
+/******************** Arduino Compiler *************************/
+
+// Update the path to arduino-cli.exe
+const arduinoCliPath = path.join(
+  app.getAppPath(),
+  'resources',
+  'microcontroller_compilers',
+  'Arduino',
+  'arduino-cli.exe'
+);
+console.log('Arduino CLI path:', arduinoCliPath);
+
+// Use this function when your app starts
+checkArduinoCliAvailability()
+  .then(version => console.log(`Arduino CLI version: ${version}`))
+  .catch(error => console.error(error));
 
 // Global variables
 let mainWindow = null; // Main window
@@ -88,8 +105,6 @@ const getFileExtension = (language) => {
     assembly: "asm",
     verilog: "v",
     vhdl: "vhd",
-    lua: "lua",
-    rust: "rs",
     matlab: "m",
     fortran: "f90",
     flowcode: "fcfx",
@@ -116,8 +131,6 @@ const getLanguageFromExtension = (extension) => {
     asm: "assembly",
     v: "verilog",
     vhd: "vhdl",
-    lua: "lua",
-    rs: "rust",
     m: "matlab",
     f90: "fortran",
     fcfx: "flowcode",
@@ -199,8 +212,6 @@ const initIpc = () => {
           { name: "Assembly", extensions: ["asm", "s"] },
           { name: "Verilog", extensions: ["v"] },
           { name: "VHDL", extensions: ["vhd", "vhdl"] },
-          { name: "Lua", extensions: ["lua"] },
-          { name: "Rust", extensions: ["rs"] },
           { name: "MATLAB", extensions: ["m"] },
           { name: "Fortran", extensions: ["f90", "f95", "f03"] },
           { name: "JavaScript", extensions: ["js"] },
@@ -240,8 +251,6 @@ const initIpc = () => {
           { name: "Assembly", extensions: ["asm", "s"] },
           { name: "Verilog", extensions: ["v"] },
           { name: "VHDL", extensions: ["vhd", "vhdl"] },
-          { name: "Lua", extensions: ["lua"] },
-          { name: "Rust", extensions: ["rs"] },
           { name: "MATLAB", extensions: ["m"] },
           { name: "Fortran", extensions: ["f90", "f95", "f03"] },
           { name: "JavaScript", extensions: ["js"] },
@@ -269,52 +278,25 @@ const initIpc = () => {
   });
 
   // New IPC handler for compiling and uploading to microcontroller
-  ipcMain.on("compile-and-upload", (event, { code, language, boardType }) => {
-    console.log(`Compiling and uploading ${language} code to ${boardType}`);
+  const tempDir = path.join(__dirname, 'microcontroller_compilers', 'Arduino');
+  const tempSketchPath = path.join(tempDir, 'temp_sketch.ino');
+  console.log('Temp sketch path:', tempSketchPath);
 
-    // Update the upload command to use the selected COM port
-    const uploadCommand = getUploadCommand(boardType, tempFile, comPort);
-
-    // Step 1: Save the code to a temporary file
-    const tempDir = app.getPath("temp");
-    const tempFile = path.join(
-      tempDir,
-      `temp_code.${getFileExtension(language)}`
-    );
-    fs.writeFileSync(tempFile, code);
-
-    // Step 2: Compile the code
-    const compileCommand = getCompileCommand(language, tempFile, boardType);
-
-    exec(compileCommand, (error, stdout, stderr) => {
-      if (error) {
-        console.error(`Compilation error: ${error}`);
-        event.reply("compile-upload-result", { success: false, error: stderr });
-        return;
+  ipcMain.on('compile-and-upload', async (event, { code, boardType, comPort }) => {
+    try {
+      if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true });
       }
-
-      console.log(`Compilation stdout: ${stdout}`);
-
-      // Step 3: Upload to microcontroller
-      const uploadCommand = getUploadCommand(boardType, tempFile);
-
-      exec(uploadCommand, (uploadError, uploadStdout, uploadStderr) => {
-        if (uploadError) {
-          console.error(`Upload error: ${uploadError}`);
-          event.reply("compile-upload-result", {
-            success: false,
-            error: uploadStderr,
-          });
-          return;
-        }
-
-        console.log(`Upload stdout: ${uploadStdout}`);
-        event.reply("compile-upload-result", {
-          success: true,
-          message: "Code successfully uploaded to the microcontroller.",
-        });
-      });
-    });
+      
+      fs.writeFileSync(tempSketchPath, code);
+      console.log(`Temporary sketch saved at: ${tempSketchPath}`);
+  
+      const result = await compileAndUpload(tempSketchPath, boardType, comPort);
+      event.reply('compile-upload-result', { success: true, message: result });
+    } catch (error) {
+      console.error('Compile and upload error:', error);
+      event.reply('compile-upload-result', { success: false, error: error.toString() });
+    }
   });
 
   // Add this to your initIpc function
@@ -356,6 +338,38 @@ function getUploadCommand(boardType, filePath, comPort) {
     default:
       throw new Error(`Unsupported board type: ${boardType}`);
   }
+}
+
+function compileAndUpload(sketch, board, port) {
+  return new Promise((resolve, reject) => {
+    const command = `"${arduinoCliPath}" compile --fqbn ${board} "${sketch}" && "${arduinoCliPath}" upload -p ${port} --fqbn ${board} "${sketch}"`;
+    console.log(`Executing command: ${command}`);
+    
+    exec(command, (error, stdout, stderr) => {
+      console.log(`stdout: ${stdout}`);
+      console.log(`stderr: ${stderr}`);
+      
+      if (error) {
+        console.error(`exec error: ${error}`);
+        reject(`Error: ${error.message}`);
+      } else {
+        resolve(`Command executed successfully`);
+      }
+    });
+  });
+}
+
+// A function to check if Arduino CLI is available
+function checkArduinoCliAvailability() {
+  return new Promise((resolve, reject) => {
+    exec(`"${arduinoCliPath}" version`, (error, stdout, stderr) => {
+      if (error) {
+        reject(`Arduino CLI not found or not working: ${error.message}`);
+        return;
+      }
+      resolve(stdout.trim());
+    });
+  });
 }
 
 // App ready event
