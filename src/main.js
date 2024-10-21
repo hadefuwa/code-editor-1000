@@ -27,12 +27,14 @@ import env from "env";
 const arduinoCliPath = app.isPackaged 
   ? path.join(process.resourcesPath, 'microcontroller_compilers', 'Arduino', 'arduino-cli.exe')
   : path.join(app.getAppPath(), 'resources', 'microcontroller_compilers', 'Arduino', 'arduino-cli.exe');
-console.log('Arduino CLI path:', arduinoCliPath);
+//console.log('Arduino CLI path:', arduinoCliPath);
 
 // Use this function when your app starts
+/*
 checkArduinoCliAvailability()
   .then(version => console.log(`Arduino CLI version: ${version}`))
   .catch(error => console.error(error));
+*/
 
 // Global variables
 let mainWindow = null; // Main window
@@ -54,7 +56,7 @@ function getAssetPath(filename) {
 
   for (const possiblePath of possiblePaths) {
     if (fs.existsSync(possiblePath)) {
-      console.log(`Found asset ${filename} at: ${possiblePath}`);
+      //console.log(`Found asset ${filename} at: ${possiblePath}`);
       return possiblePath;
     }
   }
@@ -390,6 +392,22 @@ function checkArduinoCliAvailability() {
   });
 }
 
+//I want to load the example code from the resources folder when the code editor is loaded
+function loadExampleCode() {
+  const examplePath = path.join(app.getAppPath(), 'resources', 'examples', 'arduino', 'arduino-blink.cpp');
+  console.log('Attempting to load example from:', examplePath);
+  try {
+    const exampleCode = fs.readFileSync(examplePath, 'utf8');
+    console.log('Example code loaded successfully');
+    return exampleCode;
+  } catch (error) {
+    console.error('Error reading example file:', error);
+    return '// Error loading example code';
+  }
+}
+
+
+// *********** Code for when the App is ready ***********
 // App ready event
 app.on("ready", () => {
   setApplicationMenu();
@@ -408,6 +426,11 @@ app.on("ready", () => {
         preload: path.join(__dirname, "preload.js"),
         enableRemoteModule: env.name === "test",
         webSecurity: true,
+        nodeIntegration: false,
+        contextIsolation: true,
+        preload: path.join(__dirname, "preload.js"),
+        webSecurity: true,
+        contentSecurityPolicy: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; worker-src blob:; style-src 'self' 'unsafe-inline';"
       },
     });
 
@@ -418,6 +441,15 @@ app.on("ready", () => {
         slashes: true,
       })
     );
+
+    // send the example code to the renderer process
+    mainWindow.webContents.on('did-finish-load', () => {
+      const exampleCode = loadExampleCode();
+      mainWindow.webContents.send('load-example-code', exampleCode);
+    });
+
+
+
 
     // When the main window is closed, close all other windows
     mainWindow.on("closed", () => {
@@ -485,7 +517,9 @@ app.on("activate", () => {
   }
 });
 
+/*
 console.log('Current working directory:', process.cwd());
 console.log('App path:', app.getAppPath());
 console.log('User data path:', app.getPath('userData'));
+*/
 

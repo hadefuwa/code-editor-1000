@@ -93,6 +93,12 @@
                 automaticLayout: true
             });
 
+            //handle the load-example-code event
+            window.electron.ipcRenderer.on('load-example-code', (exampleCode) => {
+                console.log('Received load-example-code event');
+                editor.setValue(exampleCode);
+            });
+
             // Populate COM port list
             window.electron.ipcRenderer.invoke('get-com-ports').then((ports) => {
                 const comPortSelect = document.getElementById('comPortSelect');
@@ -152,5 +158,59 @@
             });
         });
     </script>
+<script>
+    console.log('Script in code-editor.html loaded');
+  
+    function setEditorContent(content) {
+      console.log('setEditorContent called with:', content);
+      if (window.editor) {
+        window.editor.setValue(content);
+        console.log('Editor content set');
+      } else {
+        console.error('Editor not initialized');
+      }
+    }
+  
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('DOM fully loaded');
+      if (window.electron && window.electron.ipcRenderer) {
+        console.log('Electron IPC Renderer available');
+        window.electron.ipcRenderer.on('load-example-code', (exampleCode) => {
+          console.log('Received load-example-code event');
+          setEditorContent(exampleCode);
+        });
+      } else {
+        console.error('Electron IPC Renderer not available');
+      }
+    });
+  </script>
+  <script>
+    console.log('Script in code-editor.html loaded');
+  
+    // Wait for the editor to be fully loaded
+    function waitForEditor(callback) {
+      if (window.editor) {
+        callback();
+      } else {
+        setTimeout(() => waitForEditor(callback), 100);
+      }
+    }
+  
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('DOM fully loaded');
+      if (window.electron && window.electron.ipcRenderer) {
+        console.log('Electron IPC Renderer available');
+        window.electron.ipcRenderer.on('load-example-code', (exampleCode) => {
+          console.log('Received load-example-code event');
+          waitForEditor(() => {
+            window.editor.setValue(exampleCode);
+            console.log('Editor content set');
+          });
+        });
+      } else {
+        console.error('Electron IPC Renderer not available');
+      }
+    });
+  </script>
 </body>
 </html>

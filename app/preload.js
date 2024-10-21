@@ -33,8 +33,13 @@ contextBridge.exposeInMainWorld('electron', {
         "project-created",
         "compile-upload-result",
         "board-list-result",
-        "port-selected"
+        "port-selected",
+        "load-example-code"
       ];
+      if (validChannels.includes(channel)) {
+        ipcRenderer.on(channel, (event, ...args) => func(...args));
+      }
+      
       if (validChannels.includes(channel)) {
         ipcRenderer.on(channel, (event, ...args) => func(...args));
       }
