@@ -322,16 +322,17 @@ const initIpc = () => {
   // Add this to your initIpc function
   ipcMain.handle("get-com-ports", async () => {
     try {
-      const ports = await SerialPort.list();
-      return ports.map((port) => ({
-        path: port.path,
-        friendlyName: port.friendlyName || port.path,
-      }));
+        const ports = await SerialPort.list();
+        console.log('Available COM ports:', ports); 
+        return ports.map((port) => ({
+            path: port.path,
+            friendlyName: port.friendlyName || port.path,
+        }));
     } catch (error) {
-      console.error("Error getting COM ports:", error);
-      return [];
+        console.error("Error getting COM ports:", error);
+        return [];
     }
-  });
+});
 };
 
 // Helper function to get the compile command based on language and board type
@@ -424,15 +425,21 @@ app.on("ready", () => {
         nodeIntegration: false,
         contextIsolation: true,
         preload: path.join(__dirname, "preload.js"),
-        enableRemoteModule: env.name === "test",
-        webSecurity: true,
-        nodeIntegration: false,
-        contextIsolation: true,
-        preload: path.join(__dirname, "preload.js"),
-        webSecurity: true,
-        contentSecurityPolicy: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; worker-src blob:; style-src 'self' 'unsafe-inline';"
+        webSecurity: true,  // Disable web security for development
       },
     });
+
+    //Content Security Policy (CSP) is a security measure that helps protect your Electron application from various types of attacks
+    mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+      callback({
+          responseHeaders: {
+              ...details.responseHeaders,
+              'Content-Security-Policy': [
+                  "default-src * data: blob: 'unsafe-eval' 'unsafe-inline'"
+              ]
+          }
+      });
+  });
 
     mainWindow.loadURL(
       url.format({
@@ -447,9 +454,6 @@ app.on("ready", () => {
       const exampleCode = loadExampleCode();
       mainWindow.webContents.send('load-example-code', exampleCode);
     });
-
-
-
 
     // When the main window is closed, close all other windows
     mainWindow.on("closed", () => {
@@ -503,7 +507,8 @@ app.on("activate", () => {
         contextIsolation: true,
         preload: path.join(__dirname, "preload.js"),
         enableRemoteModule: env.name === "test",
-        webSecurity: true,
+        webSecurity: false, //set to true for production to enable web security
+        allowRunningInsecureContent: true  // Allow insecure content for development
       },
     });
 

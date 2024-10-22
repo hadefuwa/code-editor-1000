@@ -82,83 +82,109 @@
     <div id="editor-container"></div>
 
     <script src="../node_modules/monaco-editor/min/vs/loader.js"></script>
+
+    <!-- Script to create the editor -->
     <script>
-        let editor; 
         require.config({ paths: { 'vs': '../node_modules/monaco-editor/min/vs' }});
+    
+        window.MonacoEnvironment = {
+            getWorker: function(moduleId, label) {
+                return new Worker('../node_modules/monaco-editor/min/vs/base/worker/workerMain.js');
+            }
+        };
+    
+        let editor = null;
+    
+        // Initialize COM ports
+// Initialize COM ports
+async function loadComPorts() {
+    try {
+        const ports = await window.electron.ipcRenderer.invoke('get-com-ports');
+        const comPortSelect = document.getElementById('comPortSelect');
+        const currentSelection = comPortSelect.value; // Store current selection
+        
+        comPortSelect.innerHTML = '<option value="">Select COM Port</option>';
+        ports.forEach(port => {
+            const option = document.createElement('option');
+            option.value = port.path;
+            option.textContent = port.friendlyName || port.path;
+            comPortSelect.appendChild(option);
+            
+            // Restore previous selection if it still exists
+            if (port.path === currentSelection) {
+                option.selected = true;
+            }
+        });
+    } catch (error) {
+        console.error('Error loading COM ports:', error);
+    }
+}
+
+// Load ports on page load
+loadComPorts();
+
+// Change from click to focus event
+document.getElementById('comPortSelect').addEventListener('focus', function(event) {
+    // Only reload if the dropdown is being opened
+    if (!event.target.matches(':focus-visible')) {
+        loadComPorts();
+    }
+});
+    
         require(['vs/editor/editor.main'], function() {
-            editor = monaco.editor.create(document.getElementById('editor-container'), {
-                value: '// Start coding here...',
-                language: 'javascript',
-                theme: 'vs-dark',
-                automaticLayout: true
-            });
-
-            //handle the load-example-code event
-            window.electron.ipcRenderer.on('load-example-code', (exampleCode) => {
-                console.log('Received load-example-code event');
-                editor.setValue(exampleCode);
-            });
-
-            // Populate COM port list
-            window.electron.ipcRenderer.invoke('get-com-ports').then((ports) => {
-                const comPortSelect = document.getElementById('comPortSelect');
-                ports.forEach(port => {
-                    const option = document.createElement('option');
-                    option.value = port.path;
-                    option.textContent = port.friendlyName;
-                    comPortSelect.appendChild(option);
+            try {
+                editor = monaco.editor.create(document.getElementById('editor-container'), {
+                    value: '// Start coding here...',
+                    language: 'cpp',
+                    theme: 'vs-dark',
+                    automaticLayout: true
                 });
-            });
-
-            window.addEventListener('resize', function() {
-                editor.layout();
-            });
-
-            const languageSelect = document.getElementById('languageSelect');
-            languageSelect.addEventListener('change', function() {
-                monaco.editor.setModelLanguage(editor.getModel(), this.value);
-            });
-
-            document.getElementById('saveBtn').addEventListener('click', function() {
-                var code = editor.getValue();
-                var language = editor.getModel().getLanguageId();
-                window.electron.ipcRenderer.send('save-file', { code, language });
-            });
-
-            document.getElementById('loadBtn').addEventListener('click', function() {
-                window.electron.ipcRenderer.send('load-file');
-            });
-
-            document.getElementById('uploadBtn').addEventListener('click', function() {
-                const code = editor.getValue();
-                const language = editor.getModel().getLanguageId();
-                const boardType = document.getElementById('boardSelect').value;
-                const comPort = document.getElementById('comPortSelect').value;
-                
-                if (!boardType || !comPort) {
-                    alert('Please select both a board and a COM port before uploading.');
-                    return;
-                }
-                
-                window.electron.ipcRenderer.send('compile-and-upload', { code, language, boardType, comPort });
-            });
-
-            window.electron.ipcRenderer.on('file-loaded', function(content) {
-                editor.setValue(content.code);
-                languageSelect.value = content.language;
-                monaco.editor.setModelLanguage(editor.getModel(), content.language);
-            });
-
-            window.electron.ipcRenderer.on('compile-upload-result', function(result) {
-                if (result.success) {
-                    alert(result.message);
-                } else {
-                    alert('Error: ' + result.error);
-                }
-            });
+    
+                // Add event listener for the upload button
+                document.getElementById('uploadBtn').addEventListener('click', function() {
+                    const code = editor.getValue();
+                    const comPort = document.getElementById('comPortSelect').value;
+                    const boardType = 'arduino:avr:uno'; // Default to Arduino Uno
+    
+                    if (!comPort) {
+                        alert('Please select a COM port before uploading.');
+                        return;
+                    }
+    
+                    window.electron.ipcRenderer.send('compile-and-upload', {
+                        code: code,
+                        boardType: boardType,
+                        comPort: comPort
+                    });
+                });
+    
+                window.electron.ipcRenderer.on('load-example-code', (exampleCode) => {
+                    console.log('Received example code');
+                    if (editor) {
+                        editor.setValue(exampleCode);
+                    }
+                });
+    
+                window.electron.ipcRenderer.on('file-loaded', function(content) {
+                    editor.setValue(content.code);
+                });
+    
+                window.electron.ipcRenderer.on('compile-upload-result', function(result) {
+                    if (result.success) {
+                        alert(result.message);
+                    } else {
+                        alert('Error: ' + result.error);
+                    }
+                });
+    
+            } catch (error) {
+                console.error('Editor creation failed:', error);
+            }
         });
     </script>
-<script>
+
+    <!-- Script to set the editor content -->
+    <script>
     console.log('Script in code-editor.html loaded');
   
     function setEditorContent(content) {
@@ -183,8 +209,8 @@
         console.error('Electron IPC Renderer not available');
       }
     });
-  </script>
-  <script>
+    </script>
+    <script>
     console.log('Script in code-editor.html loaded');
   
     // Wait for the editor to be fully loaded
@@ -211,6 +237,6 @@
         console.error('Electron IPC Renderer not available');
       }
     });
-  </script>
+    </script>
 </body>
 </html>
