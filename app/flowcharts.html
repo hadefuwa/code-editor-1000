@@ -6,21 +6,69 @@
     <title>Flowcharts Page</title>
     <link rel="stylesheet" href="../src/stylesheets/main.css">
     <link rel="icon" href="./resources/flowcode-favicon.ico" type="image/x-icon">
+
+    <!-- Include GoJS library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gojs/2.1.40/go-debug.js"></script>
+
+    <style>
+        #flowchartContainer {
+            width: 100%;
+            height: 600px;
+            border: 1px solid #ccc;
+        }
+    </style>
 </head>
 <body>
     <div class="switch-nav">
         <button id="switchToFlowcharts" class="active">Flowcharts</button>
         <button id="switchToCode">Code Editor</button>
     </div>
-    <h1>Flowcharts</h1>
-    <!-- Add your flowchart content here -->
 
+    <h1>Flowcharts</h1>
+    <div id="flowchartContainer"></div>
 
     <script>
+        // Initialize GoJS
+        function init() {
+            var $ = go.GraphObject.make; // shorthand for creating GraphObject
+
+            var myDiagram = $(go.Diagram, "flowchartContainer", {
+                "undoManager.isEnabled": true // Enable undo/redo
+            });
+
+            // Define the basic node structure
+            myDiagram.nodeTemplate =
+                $(go.Node, "Auto",
+                    $(go.Shape, "RoundedRectangle", { strokeWidth: 0 }, // no border
+                        new go.Binding("fill", "color")),
+                    $(go.TextBlock, { margin: 8, editable: true }, // editable text
+                        new go.Binding("text", "key"))
+                );
+
+            // Define link appearance
+            myDiagram.linkTemplate =
+                $(go.Link,
+                    $(go.Shape), // line
+                    $(go.Shape, { toArrow: "Standard" }) // arrow
+                );
+
+            // Define some sample data
+            myDiagram.model = new go.GraphLinksModel([
+                { key: "Start", color: "lightgreen" },
+                { key: "Process", color: "lightblue" },
+                { key: "End", color: "salmon" }
+            ], [
+                { from: "Start", to: "Process" },
+                { from: "Process", to: "End" }
+            ]);
+        }
+
+        init();
+
+        // Switch to Code Editor
         document.getElementById('switchToCode').addEventListener('click', function() {
             window.electron.ipcRenderer.send('switch-to-code');
         });
     </script>
 </body>
 </html>
-
