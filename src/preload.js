@@ -16,10 +16,7 @@ contextBridge.exposeInMainWorld('electron', {
         "load-file",
         "compile-and-upload",
         "get-board-list",
-        "select-port",
-        "switch-to-flowcharts",
-        "switch-to-code",
-        "switch-to-scada"
+        "select-port"
       ];
       if (validChannels.includes(channel)) {
         ipcRenderer.send(channel, data);
@@ -36,13 +33,11 @@ contextBridge.exposeInMainWorld('electron', {
         "project-created",
         "compile-upload-result",
         "board-list-result",
-        "port-selected",
-        "load-example-code"
+        "port-selected"
       ];
       if (validChannels.includes(channel)) {
         ipcRenderer.on(channel, (event, ...args) => func(...args));
       }
-
     },
     removeListener: (channel, func) => {
       const validChannels = [
@@ -65,7 +60,8 @@ contextBridge.exposeInMainWorld('electron', {
       const validChannels = [
         "get-board-list",
         "get-port-list",
-        "get-com-ports"  // Add this new channel
+        "get-com-ports",
+        "load-example-program"
       ];
       if (validChannels.includes(channel)) {
         return ipcRenderer.invoke(channel, ...args);
