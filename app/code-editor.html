@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';">
     <title>Code Editor - Flowcode Lite</title>
+    <link rel="stylesheet" href="../src/stylesheets/main.css">
+    <link rel="icon" href="./resources/flowcode-favicon.ico" type="image/x-icon">
     <style>
         html, body {
             margin: 0;
@@ -47,15 +49,19 @@
     </style>
 </head>
 <body>
+    <div class="switch-nav">
+        <button id="switchToFlowcharts">Flowcharts</button>
+        <button id="switchToCode" class="active">Code Editor</button>
+    </div>
     <div class="actions">
         <button id="saveBtn">Save</button>
         <button id="loadBtn">Load</button>
         <select id="languageSelect">
+            <option value="cpp">C++</option>
             <option value="flowcode">Flowcode</option>
             <option value="flowcomponent">Flowcode Component</option>
             <option value="flowmacro">Flowcode Macro</option>
             <option value="c">C</option>
-            <option value="cpp">C++</option>
             <option value="asm">Assembly</option>
             <option value="verilog">Verilog</option>
             <option value="vhdl">VHDL</option>
@@ -70,9 +76,9 @@
             <option value="json">JSON</option>
         </select>
         <select id="boardSelect">
+            <option value="arduino:avr:uno">Arduino Uno</option>
             <option value="matrix:eblocks:BL0058">EBlocks BL0058</option>
             <option value="atmega328p">ATmega328P</option>
-            <option value="arduino:avr:uno">Arduino Uno</option>
         </select>
         <select id="comPortSelect">
             <option value="">Select COM Port</option>
@@ -85,6 +91,10 @@
 
     <!-- Script to create the editor -->
     <script>
+        document.getElementById('switchToFlowcharts').addEventListener('click', function() {
+        window.electron.ipcRenderer.send('switch-to-flowcharts');
+        });
+
         require.config({ paths: { 'vs': '../node_modules/monaco-editor/min/vs' }});
     
         window.MonacoEnvironment = {

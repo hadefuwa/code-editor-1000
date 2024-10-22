@@ -24,9 +24,20 @@ import env from "env";
 /******************** Arduino Compiler *************************/
 
 // Update the path to arduino-cli.exe
-const arduinoCliPath = app.isPackaged 
-  ? path.join(process.resourcesPath, 'microcontroller_compilers', 'Arduino', 'arduino-cli.exe')
-  : path.join(app.getAppPath(), 'resources', 'microcontroller_compilers', 'Arduino', 'arduino-cli.exe');
+const arduinoCliPath = app.isPackaged
+  ? path.join(
+      process.resourcesPath,
+      "microcontroller_compilers",
+      "Arduino",
+      "arduino-cli.exe"
+    )
+  : path.join(
+      app.getAppPath(),
+      "resources",
+      "microcontroller_compilers",
+      "Arduino",
+      "arduino-cli.exe"
+    );
 //console.log('Arduino CLI path:', arduinoCliPath);
 
 // Use this function when your app starts
@@ -276,63 +287,101 @@ const initIpc = () => {
   });
 
   // New IPC handler for compiling and uploading to microcontroller
-  ipcMain.on('compile-and-upload', async (event, { code, boardType, comPort }) => {
-    try {
-      const tempDir = path.join(app.getPath('temp'), 'flowcode-lite');
-      const sketchName = 'flowcode-lite';
-      const tempSketchPath = path.join(tempDir, `${sketchName}.ino`);
-      
-      console.log('Temp directory:', tempDir);
-      console.log('Temp sketch path:', tempSketchPath);
+  ipcMain.on(
+    "compile-and-upload",
+    async (event, { code, boardType, comPort }) => {
+      try {
+        const tempDir = path.join(app.getPath("temp"), "flowcode-lite");
+        const sketchName = "flowcode-lite";
+        const tempSketchPath = path.join(tempDir, `${sketchName}.ino`);
 
-      // Ensure the temp directory exists
-      if (!fs.existsSync(tempDir)) {
-        fs.mkdirSync(tempDir, { recursive: true });
-      }
+        console.log("Temp directory:", tempDir);
+        console.log("Temp sketch path:", tempSketchPath);
 
-      // Write the sketch file
-      fs.writeFileSync(tempSketchPath, code, 'utf8');
-      console.log(`Temporary sketch saved at: ${tempSketchPath}`);
-
-      // Construct the command
-      const compileCommand = `"${arduinoCliPath}" compile --fqbn ${boardType} "${tempDir}"`;
-      const uploadCommand = `"${arduinoCliPath}" upload -p ${comPort} --fqbn ${boardType} "${tempDir}"`;
-      const fullCommand = `${compileCommand} && ${uploadCommand}`;
-
-      console.log('Executing command:', fullCommand);
-
-      // Execute the command
-      exec(fullCommand, (error, stdout, stderr) => {
-        if (error) {
-          console.error(`exec error: ${error}`);
-          console.error(`stderr: ${stderr}`);
-          event.reply('compile-upload-result', { success: false, error: error.toString() + '\n' + stderr });
-          return;
+        // Ensure the temp directory exists
+        if (!fs.existsSync(tempDir)) {
+          fs.mkdirSync(tempDir, { recursive: true });
         }
-        console.log(`stdout: ${stdout}`);
-        console.error(`stderr: ${stderr}`);
-        event.reply('compile-upload-result', { success: true, message: 'Code compiled and uploaded successfully' });
-      });
+
+        // Write the sketch file
+        fs.writeFileSync(tempSketchPath, code, "utf8");
+        console.log(`Temporary sketch saved at: ${tempSketchPath}`);
+
+        // Construct the command
+        const compileCommand = `"${arduinoCliPath}" compile --fqbn ${boardType} "${tempDir}"`;
+        const uploadCommand = `"${arduinoCliPath}" upload -p ${comPort} --fqbn ${boardType} "${tempDir}"`;
+        const fullCommand = `${compileCommand} && ${uploadCommand}`;
+
+        console.log("Executing command:", fullCommand);
+
+        // Execute the command
+        exec(fullCommand, (error, stdout, stderr) => {
+          if (error) {
+            console.error(`exec error: ${error}`);
+            console.error(`stderr: ${stderr}`);
+            event.reply("compile-upload-result", {
+              success: false,
+              error: error.toString() + "\n" + stderr,
+            });
+            return;
+          }
+          console.log(`stdout: ${stdout}`);
+          console.error(`stderr: ${stderr}`);
+          event.reply("compile-upload-result", {
+            success: true,
+            message: "Code compiled and uploaded successfully",
+          });
+        });
+      } catch (error) {
+        console.error("Compile and upload error:", error);
+        event.reply("compile-upload-result", {
+          success: false,
+          error: error.toString(),
+        });
+      }
+    }
+  );
+
+  // Handler for getting COM ports
+  ipcMain.handle("get-com-ports", async () => {
+    try {
+      const ports = await SerialPort.list();
+      console.log("Available COM ports:", ports);
+      return ports.map((port) => ({
+        path: port.path,
+        friendlyName: port.friendlyName || port.path,
+      }));
     } catch (error) {
-      console.error('Compile and upload error:', error);
-      event.reply('compile-upload-result', { success: false, error: error.toString() });
+      console.error("Error getting COM ports:", error);
+      return [];
     }
   });
 
-  // Add this to your initIpc function
-  ipcMain.handle("get-com-ports", async () => {
-    try {
-        const ports = await SerialPort.list();
-        console.log('Available COM ports:', ports); 
-        return ports.map((port) => ({
-            path: port.path,
-            friendlyName: port.friendlyName || port.path,
-        }));
-    } catch (error) {
-        console.error("Error getting COM ports:", error);
-        return [];
+  ipcMain.on("switch-to-flowcharts", () => {
+    const focusedWindow = BrowserWindow.getFocusedWindow();
+    if (focusedWindow) {
+      focusedWindow.loadURL(
+        url.format({
+          pathname: path.join(__dirname, "flowcharts.html"),
+          protocol: "file:",
+          slashes: true,
+        })
+      );
     }
-});
+  });
+
+  ipcMain.on("switch-to-code", () => {
+    const focusedWindow = BrowserWindow.getFocusedWindow();
+    if (focusedWindow) {
+      focusedWindow.loadURL(
+        url.format({
+          pathname: path.join(__dirname, "code-editor.html"),
+          protocol: "file:",
+          slashes: true,
+        })
+      );
+    }
+  });
 };
 
 // Helper function to get the compile command based on language and board type
@@ -350,10 +399,10 @@ function getCompileCommand(language, filePath, boardType) {
 }
 
 function getUploadCommand(boardType, filePath, comPort) {
-  switch(boardType) {
-    case 'atmega328p':
+  switch (boardType) {
+    case "atmega328p":
       return `avrdude -p ${boardType} -c arduino -P ${comPort} -U flash:w:${filePath}.hex`;
-    case 'arduino:avr:uno':
+    case "arduino:avr:uno":
       return `arduino-cli upload -p ${comPort} --fqbn ${boardType} ${filePath}`;
     // Add more cases for other boards as needed
     default:
@@ -365,11 +414,11 @@ function compileAndUpload(sketch, board, port) {
   return new Promise((resolve, reject) => {
     const command = `"${arduinoCliPath}" compile --fqbn ${board} "${sketch}" && "${arduinoCliPath}" upload -p ${port} --fqbn ${board} "${sketch}"`;
     console.log(`Executing command: ${command}`);
-    
+
     exec(command, (error, stdout, stderr) => {
       console.log(`stdout: ${stdout}`);
       console.log(`stderr: ${stderr}`);
-      
+
       if (error) {
         console.error(`exec error: ${error}`);
         reject(`Error: ${error.message}`);
@@ -395,18 +444,23 @@ function checkArduinoCliAvailability() {
 
 //I want to load the example code from the resources folder when the code editor is loaded
 function loadExampleCode() {
-  const examplePath = path.join(app.getAppPath(), 'resources', 'examples', 'arduino', 'arduino-blink.cpp');
-  console.log('Attempting to load example from:', examplePath);
+  const examplePath = path.join(
+    app.getAppPath(),
+    "resources",
+    "examples",
+    "arduino",
+    "arduino-blink.cpp"
+  );
+  console.log("Attempting to load example from:", examplePath);
   try {
-    const exampleCode = fs.readFileSync(examplePath, 'utf8');
-    console.log('Example code loaded successfully');
+    const exampleCode = fs.readFileSync(examplePath, "utf8");
+    console.log("Example code loaded successfully");
     return exampleCode;
   } catch (error) {
-    console.error('Error reading example file:', error);
-    return '// Error loading example code';
+    console.error("Error reading example file:", error);
+    return "// Error loading example code";
   }
 }
-
 
 // *********** Code for when the App is ready ***********
 // App ready event
@@ -425,21 +479,23 @@ app.on("ready", () => {
         nodeIntegration: false,
         contextIsolation: true,
         preload: path.join(__dirname, "preload.js"),
-        webSecurity: true,  // Disable web security for development
+        webSecurity: true, // Disable web security for development
       },
     });
 
     //Content Security Policy (CSP) is a security measure that helps protect your Electron application from various types of attacks
-    mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
-      callback({
+    mainWindow.webContents.session.webRequest.onHeadersReceived(
+      (details, callback) => {
+        callback({
           responseHeaders: {
-              ...details.responseHeaders,
-              'Content-Security-Policy': [
-                  "default-src * data: blob: 'unsafe-eval' 'unsafe-inline'"
-              ]
-          }
-      });
-  });
+            ...details.responseHeaders,
+            "Content-Security-Policy": [
+              "default-src * data: blob: 'unsafe-eval' 'unsafe-inline'",
+            ],
+          },
+        });
+      }
+    );
 
     mainWindow.loadURL(
       url.format({
@@ -450,9 +506,9 @@ app.on("ready", () => {
     );
 
     // send the example code to the renderer process
-    mainWindow.webContents.on('did-finish-load', () => {
+    mainWindow.webContents.on("did-finish-load", () => {
       const exampleCode = loadExampleCode();
-      mainWindow.webContents.send('load-example-code', exampleCode);
+      mainWindow.webContents.send("load-example-code", exampleCode);
     });
 
     // When the main window is closed, close all other windows
@@ -508,7 +564,7 @@ app.on("activate", () => {
         preload: path.join(__dirname, "preload.js"),
         enableRemoteModule: env.name === "test",
         webSecurity: false, //set to true for production to enable web security
-        allowRunningInsecureContent: true  // Allow insecure content for development
+        allowRunningInsecureContent: true, // Allow insecure content for development
       },
     });
 
@@ -527,4 +583,3 @@ console.log('Current working directory:', process.cwd());
 console.log('App path:', app.getAppPath());
 console.log('User data path:', app.getPath('userData'));
 */
-

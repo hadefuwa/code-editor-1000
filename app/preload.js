@@ -16,7 +16,9 @@ contextBridge.exposeInMainWorld('electron', {
         "load-file",
         "compile-and-upload",
         "get-board-list",
-        "select-port"
+        "select-port",
+        "switch-to-flowcharts",
+        "switch-to-code"
       ];
       if (validChannels.includes(channel)) {
         ipcRenderer.send(channel, data);

@@ -31,7 +31,7 @@ a {
 
 /* Responsive logo */
 #logo {
-  width: 40vw; /* Double the logo size */
+  width: 60vw; /* Double the logo size */
   height: auto;
   margin-top: 5vh;
   margin-bottom: 5vh;
@@ -158,4 +158,82 @@ p {
 .actions button:active,
 .actions select:active {
   background-color: #555;
+}
+
+/* Flowcharts and Code Editor Switch Buttons */ 
+/* 22/10/2024
+
+/* Switch buttons container */
+.switch-nav {
+  background-color: #333;
+  padding: 5px;
+  border-bottom: 1px solid #444;
+}
+
+/* Individual switch buttons */
+.switch-nav button {
+  background-color: #444;
+  color: white;
+  border: none;
+  padding: 5px 15px;
+  margin-right: 5px;
+  cursor: pointer;
+}
+
+/* Hover state */
+.switch-nav button:hover {
+  background-color: #555;
+}
+
+/* Active/selected button */
+.switch-nav button.active {
+  background-color: #666;
+}
+
+/* Dark mode updates */
+html,
+body {
+  background-color: #1e1e1e;
+  color: #ffffff;
+}
+
+#app {
+  background-color: #1e1e1e;
+}
+
+h1 {
+  color: #ffffff;
+}
+
+p {
+  color: #d4d4d4;
+}
+
+.btn {
+  background-color: #0d47a1;
+}
+
+.btn:hover {
+  background-color: #1565c0;
+}
+
+/* Update switch nav styles */
+.switch-nav {
+  background-color: #1e1e1e;
+  border-bottom: 1px solid #333;
+  width: 100%;
+}
+
+.switch-nav button {
+  background-color: #252526;
+  color: #ffffff;
+  border-radius: 3px;
+}
+
+.switch-nav button:hover {
+  background-color: #2d2d2d;
+}
+
+.switch-nav button.active {
+  background-color: #37373d;
 }
