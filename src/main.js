@@ -395,6 +395,13 @@ const initIpc = () => {
       );
     }
   });
+
+  ipcMain.on("switch-to-dashboard", () => {
+    const focusedWindow = BrowserWindow.getFocusedWindow();
+    if (focusedWindow) {
+      focusedWindow.loadURL(url.format({ pathname: path.join(__dirname, "dashboard.html"), protocol: "file:", slashes: true }));
+    }
+  });
 };
 
 // Helper function to get the compile command based on language and board type

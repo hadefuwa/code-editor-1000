@@ -1,0 +1,15 @@
+{
+    "datasource": {
+      "type": "static_json"
+    },
+    "targets": [
+      {
+        "data": [
+          { "time": "2024-10-23T12:00:00Z", "metric": "CPU Usage", "value": 25 },
+          { "time": "2024-10-23T12:10:00Z", "metric": "CPU Usage", "value": 30 },
+          { "time": "2024-10-23T12:20:00Z", "metric": "CPU Usage", "value": 40 }
+        ]
+      }
+    ]
+  }
+  

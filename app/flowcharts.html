@@ -11,6 +11,7 @@
     <button id="switchToFlowcharts" class="active">Flowcharts</button>
     <button id="switchToCode">Code Editor</button>
     <button id="switchToSCADA">SCADA</button>
+    <button id="switchToDashboard">Dashboard</button>
   </div>
   <h1>Flowcharts</h1>
   <script src="https://cdn.jsdelivr.net/npm/gojs@3.0.13/release/go.js"></script>
@@ -22,6 +23,10 @@
 
     document.getElementById('switchToSCADA').addEventListener('click', function() {
         window.electron.ipcRenderer.send('switch-to-scada');
+        });
+
+        document.getElementById('switchToDashboard').addEventListener('click', function() {
+        window.electron.ipcRenderer.send('switch-to-dashboard');
         });
   </script>
   <div id="allSampleContent" class="p-4 w-full">

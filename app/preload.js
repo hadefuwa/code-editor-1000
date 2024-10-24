@@ -19,7 +19,8 @@ contextBridge.exposeInMainWorld('electron', {
         "select-port",
         "switch-to-flowcharts",
         "switch-to-code",
-        "switch-to-scada"
+        "switch-to-scada",
+        "switch-to-dashboard"
       ];
       if (validChannels.includes(channel)) {
         ipcRenderer.send(channel, data);

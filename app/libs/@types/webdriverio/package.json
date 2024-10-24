@@ -1,0 +1,55 @@
+{
+    "name": "@types/webdriverio",
+    "version": "4.13.3",
+    "description": "TypeScript definitions for WebdriverIO",
+    "license": "MIT",
+    "contributors": [
+        {
+            "name": "Nick Malaguti",
+            "url": "https://github.com/nmalaguti",
+            "githubUsername": "nmalaguti"
+        },
+        {
+            "name": "Tim Brust",
+            "url": "https://github.com/timbru31",
+            "githubUsername": "timbru31"
+        },
+        {
+            "name": "Fredrik Smedberg",
+            "url": "https://github.com/fsmedberg-tc",
+            "githubUsername": "fsmedberg-tc"
+        },
+        {
+            "name": "Tanvir ul Islam",
+            "url": "https://github.com/tanvirislam06",
+            "githubUsername": "tanvirislam06"
+        },
+        {
+            "name": "Dave Parslow",
+            "url": "https://github.com/daveparslow",
+            "githubUsername": "daveparslow"
+        },
+        {
+            "name": "Phil Leger",
+            "url": "https://github.com/phil-lgr",
+            "githubUsername": "phil-lgr"
+        },
+        {
+            "name": "Oskar Lindgren",
+            "url": "https://github.com/mroggy85",
+            "githubUsername": "mroggy85"
+        }
+    ],
+    "main": "",
+    "types": "index",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/DefinitelyTyped/DefinitelyTyped.git"
+    },
+    "scripts": {},
+    "dependencies": {
+        "@types/node": "*"
+    },
+    "typesPublisherContentHash": "34c9cf545df50e394a21da33bafe24e8a1bfcb73660f316a2605274d98295479",
+    "typeScriptVersion": "2.0"
+}

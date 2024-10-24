@@ -53,6 +53,7 @@
         <button id="switchToFlowcharts">Flowcharts</button>
         <button id="switchToCode" class="active">Code Editor</button>
         <button id="switchToSCADA">SCADA</button>
+        <button id="switchToDashboard">Dashboard</button>
     </div>
     <div class="actions">
         <button id="saveBtn">Save</button>
@@ -98,6 +99,10 @@
 
         document.getElementById('switchToSCADA').addEventListener('click', function() {
         window.electron.ipcRenderer.send('switch-to-scada');
+        });
+
+        document.getElementById('switchToDashboard').addEventListener('click', function() {
+        window.electron.ipcRenderer.send('switch-to-dashboard');
         });
 
         require.config({ paths: { 'vs': '../node_modules/monaco-editor/min/vs' }});

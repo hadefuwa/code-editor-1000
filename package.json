@@ -2,7 +2,7 @@
   "name": "flowcode-lite",
   "productName": "Flowcode Lite",
   "description": "A Lite version of Flowcode",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "private": true,
   "author": "Hamed Adefuwa <hamed.adefuwa@matrixtsl.com>",
   "copyright": "© 2024, Matrix TSL",
@@ -47,7 +47,9 @@
       {
         "from": "resources/microcontroller_compilers",
         "to": "microcontroller_compilers",
-        "filter": ["**/*"]
+        "filter": [
+          "**/*"
+        ]
       }
     ]
   },
@@ -63,7 +65,10 @@
     "build": "cross-env NODE_ENV=production electron-builder"
   },
   "dependencies": {
+    "chart.js": "^4.4.5",
+    "chartjs-adapter-moment": "^1.0.1",
     "fs-jetpack": "^4.1.0",
+    "moment": "^2.30.1",
     "monaco-editor": "^0.52.0",
     "serialport": "^12.0.0"
   },

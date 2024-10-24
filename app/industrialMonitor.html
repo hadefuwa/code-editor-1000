@@ -10,6 +10,7 @@
   <button id="switchToFlowcharts">Flowcharts</button>
   <button id="switchToCode">Code Editor</button>
   <button id="switchToSCADA" class="active">SCADA</button>
+  <button id="switchToDashboard">Dashboard</button>
 </div>
 <h1>SCADA</h1>
 <div id="allSCADAContent" class="p-4 w-full">
@@ -20,6 +21,10 @@
 
     document.getElementById('switchToFlowcharts').addEventListener('click', function() {
         window.electron.ipcRenderer.send('switch-to-flowcharts');
+        });
+
+    document.getElementById('switchToDashboard').addEventListener('click', function() {
+        window.electron.ipcRenderer.send('switch-to-dashboard');
         });
 </script>          
 <div id="sample">

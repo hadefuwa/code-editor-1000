@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grafana Dashboard</title>
+    <link rel="stylesheet" href="../src/stylesheets/flowcharts.css">
+    <link rel="icon" href="./resources/flowcode-favicon.ico" type="image/x-icon">
+    <style>
+        body {
+                font-family: Arial, sans-serif;
+                background-color: #1e1e1e;
+                color: white;
+                margin: 0;
+                padding: 0;
+            }
+
+            .dashboard {
+                padding: 20px;
+            }
+
+            .panel {
+                background-color: #2e2e2e;
+                border-radius: 5px;
+                margin-bottom: 20px;
+                padding: 15px;
+            }
+
+            .panel-title {
+                font-size: 18px;
+                margin-bottom: 10px;
+            }
+
+            /* Center-align chart containers */
+            .chart-container {
+                position: relative;
+                height: 400px;
+                width: 100%;
+                max-width: 800px; /* Set a max width for charts */
+                margin: 0 auto; /* Center-align the chart */
+            }
+
+            .gauge-container {
+                display: flex;
+                justify-content: space-around;
+                flex-wrap: wrap;
+            }
+
+            .gauge-panel {
+                width: 30%;
+                background-color: #2e2e2e;
+                margin-bottom: 20px;
+                padding: 15px;
+                border-radius: 5px;
+            }
+
+            .gauge {
+                height: 150px;
+                text-align: center;
+                font-size: 48px;
+                line-height: 150px;
+            }
+
+            #gaugeChart, .gaugeCanvas {
+                width: 200px;
+                height: 200px;
+                margin: auto;
+            }
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-moment@1.0.0"></script>
+</head>
+<body>
+    <div class="switch-nav">
+        <button id="switchToCode">Code Editor</button>
+        <button id="switchToFlowcharts">Flowcharts</button>
+        <button id="switchToSCADA">SCADA</button>
+        <button id="switchToDashboard" class="active">Dashboard</button>
+    </div>
+    <script>
+        document.getElementById('switchToCode').addEventListener('click', function() {
+            window.electron.ipcRenderer.send('switch-to-code');
+        });
+
+        document.getElementById('switchToFlowcharts').addEventListener('click', function() {
+            window.electron.ipcRenderer.send('switch-to-flowcharts');
+        });
+
+        document.getElementById('switchToSCADA').addEventListener('click', function() {
+            window.electron.ipcRenderer.send('switch-to-scada');
+        });
+    </script>
+
+    <div class="dashboard">
+
+        <!-- First Time Series Chart -->
+        <div class="panel" id="metrics-panel">
+            <div class="panel-title">Motor RPM</div>
+            <div class="chart-container">
+                <canvas id="timeSeriesChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Second Time Series Chart -->
+        <div class="panel" id="metrics-panel2">
+            <div class="panel-title">Temperature</div>
+            <div class="chart-container">
+                <canvas id="temperatureChart"></canvas>
+            </div>
+        </div>
+        
+        <!-- Gauges Section -->
+        <div class="gauge-container">
+            <div class="gauge-panel">
+                <div class="panel-title">E1</div>
+                <canvas class="gaugeCanvas" id="gaugeChart1"></canvas>
+            </div>
+            <div class="gauge-panel">
+                <div class="panel-title">E2</div>
+                <canvas class="gaugeCanvas" id="gaugeChart2"></canvas>
+            </div>
+            <div class="gauge-panel">
+                <div class="panel-title">E3</div>
+                <canvas class="gaugeCanvas" id="gaugeChart3"></canvas>
+            </div>
+            <div class="gauge-panel">
+                <div class="panel-title">E4</div>
+                <canvas class="gaugeCanvas" id="gaugeChart4"></canvas>
+            </div>
+            <div class="gauge-panel">
+                <div class="panel-title">E5</div>
+                <canvas class="gaugeCanvas" id="gaugeChart5"></canvas>
+            </div>
+            <div class="gauge-panel">
+                <div class="panel-title">E6</div>
+                <canvas class="gaugeCanvas" id="gaugeChart6"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        console.log("Dashboard script started.");
+    
+        // Data for Motor RPM
+        const rpmData = [
+            {"time": "2024-10-23T12:00:00Z", "value": 2486},
+            {"time": "2024-10-23T12:05:00Z", "value": 2351},
+            {"time": "2024-10-23T12:10:00Z", "value": 2034},
+            {"time": "2024-10-23T12:15:00Z", "value": 1676},
+            {"time": "2024-10-23T12:20:00Z", "value": 2237},
+            {"time": "2024-10-23T12:25:00Z", "value": 1795},
+            {"time": "2024-10-23T12:30:00Z", "value": 2170},
+            {"time": "2024-10-23T12:35:00Z", "value": 1730},
+            {"time": "2024-10-23T12:40:00Z", "value": 1025},
+            {"time": "2024-10-23T12:45:00Z", "value": 710},
+            {"time": "2024-10-23T12:50:00Z", "value": 2707},
+            {"time": "2024-10-23T12:55:00Z", "value": 2330},
+            {"time": "2024-10-23T13:00:00Z", "value": 1993},
+            {"time": "2024-10-23T13:05:00Z", "value": 1206},
+            {"time": "2024-10-23T13:10:00Z", "value": 1666},
+            {"time": "2024-10-23T13:15:00Z", "value": 1044},
+            {"time": "2024-10-23T13:20:00Z", "value": 1262},
+            {"time": "2024-10-23T13:25:00Z", "value": 1885},
+            {"time": "2024-10-23T13:30:00Z", "value": 506},
+            {"time": "2024-10-23T13:35:00Z", "value": 2672}
+        ];
+
+        // Data for Temperature (new graph)
+        const temperatureData = [
+            {"time": "2024-10-23T12:00:00Z", "value": 33},
+            {"time": "2024-10-23T12:05:00Z", "value": 35.789474},
+            {"time": "2024-10-23T12:10:00Z", "value": 37.578947},
+            {"time": "2024-10-23T12:15:00Z", "value": 41.368421},
+            {"time": "2024-10-23T12:20:00Z", "value": 44.157895},
+            {"time": "2024-10-23T12:25:00Z", "value": 49.647368},
+            {"time": "2024-10-23T12:30:00Z", "value": 49.736842},
+            {"time": "2024-10-23T12:35:00Z", "value": 50.526316},
+            {"time": "2024-10-23T12:40:00Z", "value": 50.915789},
+            {"time": "2024-10-23T12:45:00Z", "value": 50.995263},
+            {"time": "2024-10-23T12:50:00Z", "value": 52.894737},
+            {"time": "2024-10-23T12:55:00Z", "value": 53.684211},
+            {"time": "2024-10-23T13:00:00Z", "value": 53.873684},
+            {"time": "2024-10-23T13:05:00Z", "value": 53.963158},
+            {"time": "2024-10-23T13:10:00Z", "value": 56.052632},
+            {"time": "2024-10-23T13:15:00Z", "value": 56.842105},
+            {"time": "2024-10-23T13:20:00Z", "value": 56.931579},
+            {"time": "2024-10-23T13:25:00Z", "value": 66.421053},
+            {"time": "2024-10-23T13:30:00Z", "value": 69.210526},
+            {"time": "2024-10-23T13:35:00Z", "value": 72}
+        ];
+
+
+        // Canvas contexts for time series
+        const rpmCtx = document.getElementById('timeSeriesChart').getContext('2d');
+        const tempCtx = document.getElementById('temperatureChart').getContext('2d');
+
+        // RPM Time Series Chart
+        const rpmLabels = rpmData.map(data => data.time);
+        const rpmValues = rpmData.map(data => data.value);
+        const rpmChart = new Chart(rpmCtx, {
+            type: 'line',
+            data: {
+                labels: rpmLabels,
+                datasets: [{
+                    label: 'Motor RPM',
+                    data: rpmValues,
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 2,
+                    fill: true
+                }]
+            },
+            options: {
+                scales: {
+                    x: {
+                        type: 'time',
+                        time: {
+                            parser: 'YYYY-MM-DDTHH:mm:ssZ',
+                            unit: 'minute',
+                            displayFormats: {
+                                minute: 'h:mm a'
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Time'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'RPM'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Temperature Time Series Chart
+        const tempLabels = temperatureData.map(data => data.time);
+        const tempValues = temperatureData.map(data => data.value);
+        const temperatureChart = new Chart(tempCtx, {
+            type: 'line',
+            data: {
+                labels: tempLabels,
+                datasets: [{
+                    label: 'Temperature (°C)',
+                    data: tempValues,
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 2,
+                    fill: true
+                }]
+            },
+            options: {
+                scales: {
+                    x: {
+                        type: 'time',
+                        time: {
+                            parser: 'YYYY-MM-DDTHH:mm:ssZ',
+                            unit: 'minute',
+                            displayFormats: {
+                                minute: 'h:mm a'
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Time'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Temperature (°C)'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Static data for the gauges
+        const staticGaugeData = [85, 75, 15, 90, 33, 80]; // Values for 6 gauges
+
+        // Function to create gauges
+        function createGauge(ctx, value, title) {
+            return new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Used', 'Remaining'],
+                    datasets: [{
+                        data: [value, 100 - value],
+                        backgroundColor: ['#ff4c4c', '#e0e0e0'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    rotation: -90,
+                    circumference: 180,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            display: true
+                        },
+                        tooltip: {
+                            enabled: false
+                        }
+                    }
+                },
+                plugins: [{
+                    id: 'gaugeText',
+                    afterDraw: (chart) => {
+                        const { ctx, width, height } = chart;
+                        ctx.save();
+                        
+                        // Draw the title
+                        ctx.fillStyle = '#ffffff';
+                        ctx.font = '20px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(title, width / 2, height / 3 + 65);
+                        
+                        // Draw the value
+                        ctx.fillStyle = '#ff4c4c';
+                        ctx.font = 'bold 20px Arial';
+                        ctx.fillText(value + '%', width / 2, height / 2 + 60);
+                        
+                        ctx.restore();
+                    }
+                }]
+            });
+        }
+
+        // Create 6 gauges with different values
+        createGauge(document.getElementById('gaugeChart1').getContext('2d'), staticGaugeData[0], 'E1');
+        createGauge(document.getElementById('gaugeChart2').getContext('2d'), staticGaugeData[1], 'E2');
+        createGauge(document.getElementById('gaugeChart3').getContext('2d'), staticGaugeData[2], 'E3');
+        createGauge(document.getElementById('gaugeChart4').getContext('2d'), staticGaugeData[3], 'E4');
+        createGauge(document.getElementById('gaugeChart5').getContext('2d'), staticGaugeData[4], 'E5');
+        createGauge(document.getElementById('gaugeChart6').getContext('2d'), staticGaugeData[5], 'E6');
+    
+        console.log("Dashboard script execution finished.");
+    </script>
+</body>
+</html>
