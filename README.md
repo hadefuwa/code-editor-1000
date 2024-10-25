@@ -1,15 +1,15 @@
-# Flowcode-Lite
+# Code-Editor-1000
 
 ---
 
-Welcome to Flowcode Lite — a streamlined and easy-to-use version of the powerful Flowcode microcontroller programming IDE. Designed to provide a simplified and lightweight experience, Flowcode Lite is perfect for users looking for a no-fuss environment to work with microcontroller programming and embedded systems.
+Welcome to Code Editor 1000 — a streamlined and easy-to-use microcontroller programming IDE. Designed to provide a simplified and lightweight experience, Code Editor 1000 is perfect for users looking for a no-fuss environment to work with microcontroller programming and embedded systems.
 
 # Quick start
 
 Make sure you have [Node.js](https://nodejs.org) installed, then type...
 ```
-git clone https://github.com/hadefuwa/flowcode-lite.git
-cd flowcode-lite
+git clone https://github.com/hadefuwa/code-editor-1000.git
+cd code-editor-1000
 npm install
 npm start
 ```
@@ -88,4 +88,4 @@ Once the packaging process finished, the `dist` directory will contain your dist
 [Electron-builder](https://github.com/electron-userland/electron-builder) is handling the packaging process. Follow docs over there to customise your build.
 
 You can package your app cross-platform from a single operating system, [electron-builder kind of supports this](https://www.electron.build/multi-platform-build), but there are limitations and asterisks. That's why this boilerplate doesn't do that by default.
-"# flowcode-lite" 
+"# code-editor-1000" 
